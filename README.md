@@ -1,5 +1,5 @@
 # aWASMe
-Description here!
+A WASM interpreter with dual modes - one as a browser-based VM and one as a simulator for WASM. It uses a structured parsing and execution pipeline in C++ & emscripten, to load binary modules , validate and decode instructions, and simulate a full virtual machine directly in the browser.
 
 ## Mentors
 - [Selvaganesh Arunmozhi](https://github.com/thisisselva18)
