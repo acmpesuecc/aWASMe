@@ -25,3 +25,11 @@
 ### Next Week 
 - Read up a bit more on workings of the runtime
 - Start working on the engine itself
+
+
+## Samyuktha's Progress
+- Read up on the basics of WASM and what makes using it advantageous over JS runtimes
+- Started reading up on WAT and wrote some basic programs
+### Next Week
+- Read up more on the anatomy of a WASM runtime
+- Work out the details of how the loader and decoder pipeline for .wasm files works and begin implementation 
