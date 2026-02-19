@@ -3,8 +3,9 @@
 
 #include<optional>
 #include<stack>
-#include"value.hpp"
 #include<vector>
+#include"value.hpp"
+#include "instruction.hpp"
 
 class VM {
 	public:
@@ -12,12 +13,18 @@ class VM {
 		void push(Value);
 		std::optional<Value> pop();
 
-		// TODO: Create a run_instr function which runs an instruction and updates the ip
+		void load(const std::vector<Instruction>& instrs);
+    	void run();
 
 	private:
 		std::vector<Value> stack;
 		//TODO: add a vector of instructions, along with instruction pointer 'ip'
 		//TODO: Week 3: add activation record stack 
+
+		bool run_instr(const Instruction& instr);
+
+		std::vector<Instruction> instructions;
+		size_t ip;
 
 };
 #endif
