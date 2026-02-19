@@ -18,8 +18,6 @@ class VM {
 
 	private:
 		std::vector<Value> stack;
-		//TODO: add a vector of instructions, along with instruction pointer 'ip'
-		//TODO: Week 3: add activation record stack 
 
 		bool run_instr(const Instruction& instr);
 
