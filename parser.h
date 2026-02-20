@@ -98,13 +98,6 @@ void Module::parse_section(std::vector<uint8_t>& data,size_t size ,size_t &offse
  
 }
 
-/*
-    ID 1 - Type section : func signatures
-    ID 3 - Function section : func body ig 
-    ID 5??
-    ID 6????
-    ID 8  - start section-?
-    ID 10 - code section -?
-*/
+
 
 
