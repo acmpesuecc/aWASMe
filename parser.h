@@ -16,10 +16,11 @@ class Module
      std::size_t size;
      std::vector<uint8_t> Loadfile(std::string Path);
      size_t leb128(std::vector<uint8_t>& data, size_t size,size_t &offset);
-    std::vector<Function> functions;         
+     std::vector<Function> functions;         
     //std::vector<Memory> memories;         
     //std::vector<Export> exports;          
-    //std::vector<Global> globals;       
+    //std::vector<Global> globals;  
+    void parse_section(std::vector<uint8_t>& data,size_t size ,size_t &offset);     
     uint32_t start_function;           
 
 };
@@ -49,22 +50,61 @@ size_t Module::leb128(std::vector<uint8_t>& data, size_t size,size_t &offset)
 {
 
     size_t secSize=0;
-    uint8_t Id = data[offset++]; //SECTION ID
+    
     int shift=0;
     while(offset<size)
     {
-        if(data[offset]&0x80)
+        if(data[offset]&0x80) 
         {
             secSize|=(data[offset]&0x7f)<<shift;
             shift+=7;
         }
         else{
-            secSize|=(data[offset]&0x7f)<<shift;
+            secSize|=(data[offset]&0x7f)<<shift; 
             return secSize;
         }
         offset++;
     }
     return secSize;
 }
+
+void Module::parse_section(std::vector<uint8_t>& data,size_t size ,size_t &offset)
+{
+    while(offset<size)
+    {
+        uint8_t Id = data[offset++]; //SECTION ID
+        size_t secSize;
+        switch (Id)
+        {
+         // Call the corrosponding functions here 
+            case 1:
+                secSize=leb128(data,size,offset);
+                //respective func called here
+                break;
+            case 3:
+                secSize=leb128(data,size,offset);
+                break;
+            case 8:
+                secSize=leb128(data,size,offset);
+                break;
+            case 10:
+                secSize=leb128(data,size,offset);
+                break;
+            default:
+                secSize=leb128(data,size,offset);
+                break;
+        } 
+    }
+ 
+}
+
+/*
+    ID 1 - Type section : func signatures
+    ID 3 - Function section : func body ig 
+    ID 5??
+    ID 6????
+    ID 8  - start section-?
+    ID 10 - code section -?
+*/
 
 
