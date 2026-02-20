@@ -14,10 +14,13 @@ class VM {
 		std::optional<Value> pop();
 
 		void load(const std::vector<Instruction>& instrs);
-    	void run();
+		void run();
 
 	private:
 		std::vector<Value> stack;
+		/// Stores the indices where to jump into the `instructions` vector when a br is reached, depending on the type of the block (whether loop or break etc.)
+		// Example: if the instruction br 2, it'll pop 2 elements from this vector and jump the the latest popped element.
+		std::vector<size_t> br_labels; 
 
 		bool run_instr(const Instruction& instr);
 
