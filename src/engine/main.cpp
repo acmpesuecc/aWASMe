@@ -9,11 +9,14 @@
 int main() {
 	VM vm;
 
-    std::vector<Instruction> program = {
-        {InstrKind::I32_CONST, 10},		//proof of concept
-        {InstrKind::I32_CONST, 20},
-        {InstrKind::I32_ADD},
-        {InstrKind::END}
+    std::vector<Instruction> program = { 		// proof of concept
+	{InstrKind::I32_CONST, {.value = 34}},
+	{InstrKind::I32_CONST, {.value = 35}},
+	{InstrKind::I32_ADD},
+	{InstrKind::I32_CONST, {.value = 1}}, // Change this from 0 to any non zero number and see the result!
+	{InstrKind::IF, { .if_ = {{4,6}} }},
+		{InstrKind::I32_CONST, {.value = 420}},
+	{InstrKind::END},
     };
 
     vm.load(program);
