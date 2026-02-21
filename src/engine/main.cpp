@@ -11,7 +11,7 @@ int main() {
     VM vm;
 
     std::vector<Instruction> program = { 		// proof of concept
-	{InstrKind::I32_CONST, {.value = 34}},
+	//{InstrKind::I32_CONST, {.value = 34}},
 	{InstrKind::I32_CONST, {.value = 35}}, 
 	{InstrKind::I32_ADD},
 	{InstrKind::I32_CONST, {.value = 1}}, // Change this from 0 to any non zero number and see the result!
