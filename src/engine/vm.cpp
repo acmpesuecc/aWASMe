@@ -1,4 +1,5 @@
 #include"vm.hpp"
+#include"errors.hpp"
 
 VM::VM() {
 	this->stack = {};
@@ -22,7 +23,6 @@ void VM::load(const std::vector<Instruction>& instrs) {
 
 bool VM::run_instr(const Instruction& instr) {
     switch (instr.kind) {
-
         case InstrKind::I32_CONST: {
 	    InstrArgs args = instr.args.value();
             int32_t value = std::get<int32_t>(args.value);
@@ -31,6 +31,7 @@ bool VM::run_instr(const Instruction& instr) {
         }
 
         case InstrKind::I32_ADD: {
+	    this->expect_stack({ValueType::i32,ValueType::i32});	
             auto b = std::get<int32_t>(*pop());
             auto a = std::get<int32_t>(*pop());
             push(a + b);
@@ -38,6 +39,7 @@ bool VM::run_instr(const Instruction& instr) {
         }
 
         case InstrKind::I32_SUB: {
+	    this->expect_stack({ValueType::i32,ValueType::i32});	
             auto b = std::get<int32_t>(*pop());
             auto a = std::get<int32_t>(*pop());
             push(a - b);
@@ -45,6 +47,7 @@ bool VM::run_instr(const Instruction& instr) {
         }
 
         case InstrKind::I32_MUL: {
+	    this->expect_stack({ValueType::i32,ValueType::i32});	
             auto b = std::get<int32_t>(*pop());
             auto a = std::get<int32_t>(*pop());
             push(a * b);
@@ -85,12 +88,13 @@ bool VM::run_instr(const Instruction& instr) {
 	}
 
 	case InstrKind::IF: {
+	    this->expect_stack({ValueType::i32});	
 	    InstrArgs args = instr.args.value();
 	    auto if_blk_info = args.if_.if_block_info; 
 	    auto else_blk_info_opt = args.if_.else_block_info; 
 
-	    Value val = this->pop().value(); // TODO: throw errors pop returns null 
-            int32_t v = std::get<int32_t>(val); // TODO: handle error  
+	    Value val = this->pop().value(); 
+            int32_t v = std::get<int32_t>(val);  
 	
 	    decltype(if_blk_info) blk_info; 
 
@@ -118,4 +122,26 @@ void VM::run() {
             break;
         ip++;
     }
+}
+
+
+void VM::expect_stack(std::vector<ValueType> expected_values) {
+	if(this->stack.size() < expected_values.size()) throw ExpectStackError(expected_values,this->stack);
+	auto s_elm = this->stack.rbegin();
+	for(auto elm = expected_values.rbegin(); elm != expected_values.rend(); elm++) {
+		Value &value = *s_elm;
+		s_elm++;
+		switch(*elm) {
+			case ValueType::i32: if(!std::holds_alternative<int32_t>(value)) throw ExpectStackError(expected_values,this->stack); break;
+			case ValueType::i64: if(!std::holds_alternative<int64_t>(value)) throw ExpectStackError(expected_values,this->stack); break;
+			case ValueType::f32: if(!std::holds_alternative<float>(value))   throw ExpectStackError(expected_values,this->stack); break;
+			case ValueType::f64: if(!std::holds_alternative<double>(value))  throw ExpectStackError(expected_values,this->stack); break;
+		}
+	}
+
+}
+
+void VM::expect_stack_exact(std::vector<ValueType> expected_values) {
+	if(this->stack.size() != expected_values.size()) throw ExpectStackError(expected_values,this->stack);
+	this->expect_stack(expected_values);
 }

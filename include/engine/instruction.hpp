@@ -15,7 +15,7 @@ enum class InstrKind {
     BR,
 
     IF,
-
+    
     END
 };
 
