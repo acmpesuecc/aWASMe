@@ -35,7 +35,7 @@ int main (int argc, char* argv[]) {
         uint8_t Id = data[offset]; //read section ID
 		std::cout << "Section ID: " << (int)Id << std::endl;
 		++offset;
-        secSize = leb128_decode(data, filesize, offset); 	//read section size - leb128 changes offset globally to be past the integer by itself 
+        secSize = leb128_decode(data, filesize, offset); 	//read section size - leb128_decode() changes offset globally to be past the integer by itself 
 		std::cout << "Section size (read from wasm file): " << secSize << std::endl;
 		sectionData = dataspan.subspan(offset, secSize);		//bc of above, section size is not included in section data when passing to parsing functions
 		std::cout << "Section data size (size of program's copy of the section data): " << sectionData.size() << std::endl;
@@ -59,4 +59,5 @@ int main (int argc, char* argv[]) {
 		offset+=secSize;
     }
 	return 0;
+
 }
