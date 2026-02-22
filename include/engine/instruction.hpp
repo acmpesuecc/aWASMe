@@ -47,6 +47,8 @@ struct Instruction {
 
     Instruction(InstrKind k, InstrArgs a):
         kind(k), args(a) {}
+
+    std::string to_string();
 };
 
 #endif

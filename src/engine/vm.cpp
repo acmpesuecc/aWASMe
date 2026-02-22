@@ -117,11 +117,15 @@ bool VM::run_instr(const Instruction& instr) {
 }
 
 void VM::run() {
-    while (ip < instructions.size()) {
-        if (!run_instr(instructions[ip]))
-            break;
-        ip++;
-    }
+	while (ip < instructions.size()) {
+		try {
+			if (!run_instr(instructions[ip]))
+				break;
+			ip++;
+		} catch (...) {
+			throw VMError(std::string("Error occured while running instruction `" + instructions[ip].to_string()  + "` at index " +std::to_string(ip)),std::current_exception());
+		}
+	}
 }
 
 

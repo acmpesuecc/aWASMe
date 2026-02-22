@@ -2,6 +2,7 @@
 #define ERRORS_H
 
 #include<string>
+#include<exception>
 #include<vector>
 
 #include"value.hpp"
@@ -15,4 +16,19 @@
 			ExpectStackError(std::vector<ValueType> expected, std::vector<Value> got);
 			const char* what() const noexcept; 
 	};
+
+	class VMError: public std::exception {
+		private:
+			std::string message;
+			std::exception_ptr inner;
+			std::string what_string; // what will be finally sent when what() is called. Combines the messages passed as well as the what() message of the inner exception.
+		public:
+		VMError(std::string msg): message(msg), inner(nullptr) {};
+		VMError(std::exception_ptr e);
+		VMError(std::string msg, std::exception_ptr e);
+
+		void throw_inner() const;
+		const char* what() const noexcept;
+	};
+
 #endif
