@@ -12,7 +12,7 @@
 
 
 ## Samyuktha's Progress
-- Set up the environment for parsing (defined the module class and the structs inside them, set up the header files and supporting .cpp files)
+- Set up the environment for parsing (defined the module class and the structs inside it, set up the header files and supporting .cpp files)
 - The program is currently able to access each section of the WASM file individually
 ### Next Week
 - Complete the parse_code_section function
