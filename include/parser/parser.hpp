@@ -1,7 +1,7 @@
 #pragma once
 #include<string>
 #include<span>
-#include "module.hpp"
+#include "module/module.hpp"
 
 //Section parsing 
 void parse_code_section(std::span<const uint8_t> data, Module& module);

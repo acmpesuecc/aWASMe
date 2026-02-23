@@ -1,10 +1,10 @@
-/*to execute: 
-	g++ -I./include/engine src/engine/main.cpp src/engine/vm.cpp -o main
+/*To execute: 
+	g++ -I./include src/engine/main.cpp src/engine/vm.cpp -o main
 	./main
 */
 
 #include<iostream>
-#include"vm.hpp"
+#include"engine/vm.hpp"
 
 int main() {
 	VM vm;

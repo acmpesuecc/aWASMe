@@ -1,11 +1,8 @@
-#ifndef VM_HPP
-#define VM_HPP
-
+#pragma once
 #include<optional>
 #include<stack>
 #include<vector>
-#include"value.hpp"
-#include "instruction.hpp"
+#include "module/instruction.hpp"
 
 class VM {
 	public:
@@ -28,4 +25,3 @@ class VM {
 		size_t ip;
 
 };
-#endif
