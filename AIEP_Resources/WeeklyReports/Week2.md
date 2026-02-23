@@ -20,3 +20,16 @@
    - set up the mapping from raw binary to opcodes for translation purposes
    - store the translated opcodes in the functions part of the module object
 - Start looking into how to parse the linear memory and export sections
+
+
+## Shashi's Progress
+- Initialized the engine loop & added basic arithmetic operations (``CONST``, ``ADD``, ``SUB``, ``MUL``, ``END``)
+- Made a vector to store the operands & the ability to push & pop from it
+- Also implemented a instruction pointer(``ip``) to track operations sequentially
+### Next Week
+- Implement improved error handling
+- Implementing branch conditionals
+- Reading up on ``local`` instructions
+ 
+  
+
