@@ -30,6 +30,16 @@
 - Implement improved error handling
 - Implementing branch conditionals
 - Reading up on ``local`` instructions
+
+## Likith's Progress
+-Implemented Load wasm file function
+-Implemented a LEB128 decoder
+
+### Next week
+-Complete parse_section function 
+-Refactor and improve the structure of the existing codebase
+-Develop validation mechanisms for parsed sections
+
  
   
 
