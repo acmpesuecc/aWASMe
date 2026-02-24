@@ -5,6 +5,14 @@ std::string Instruction::to_string() {
 		    case InstrKind::I32_ADD: return "i32.add";
 		    case InstrKind::I32_SUB: return "i32.sub";
 		    case InstrKind::I32_MUL: return "i32.mul" ;
+		    case InstrKind::I32_EQ: return "i32.eq";
+		    case InstrKind::I32_AND: return "i32.add";
+		    case InstrKind::I32_OR: return "i32.or";
+		    case InstrKind::I32_XOR: return "i32.xor";
+		    case InstrKind::I32_NOT: return "i32.not";
+		    case InstrKind::I32_SHL: return "i32.shl";
+		    case InstrKind::I32_SHR_U: return "i32.shru";      
+		    case InstrKind::I32_SHR_S: return "i32.shrs";     
 		    case InstrKind::BLOCK: return "block";
 		    case InstrKind::LOOP: return "loop";
 		    case InstrKind::BR: return "br " + std::to_string(this->args.value().index);
