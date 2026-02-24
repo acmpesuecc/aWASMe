@@ -54,64 +54,130 @@ bool VM::run_instr(const Instruction& instr) {
             return true;
         }
 
-        case InstrKind::END: {
-	    size_t loc = this->br_labels.back(); 
-	    this->br_labels.pop_back();
- 	    this->ip = loc;
-	    return true;
-        }
+		case InstrKind::I32_EQ: {
+			this->expect_stack({ValueType::i32,ValueType::i32});
+			auto b = std::get<int32_t>(*pop());
+			auto a = std::get<int32_t>(*pop());
+			push(static_cast<int32_t>(a == b));
+			return true;
+		}
 
-	case InstrKind::BLOCK: {
-	    InstrArgs args = instr.args.value();
-	    auto bk = args.block_kind;
-	    this->br_labels.push_back(bk.block_end);
-	    return true;
-	}
+		case InstrKind::I32_AND: {
+			this->expect_stack({ValueType::i32,ValueType::i32});
+			auto b = std::get<int32_t>(*pop());
+			auto a = std::get<int32_t>(*pop());
+			push(a & b);
+			return true;
+		}
 
-	case InstrKind::LOOP: {
-	    InstrArgs args = instr.args.value();
-	    auto bk = args.block_kind;
-	    this->br_labels.push_back(bk.block_start);
-	    return true;
-	}
+		case InstrKind::I32_OR: {
+			this->expect_stack({ValueType::i32,ValueType::i32});
+			auto b = std::get<int32_t>(*pop());
+			auto a = std::get<int32_t>(*pop());
+			push(a | b);
+			return true;
+		}
 
-	case InstrKind::BR: {
-	    InstrArgs args = instr.args.value();
-	    int32_t bk = std::get<int32_t>(args.value);
-	    size_t loc;	
-	    for(int i = 0;i<=bk;i++) {
-	         loc = this->br_labels.back(); 
-		 this->br_labels.pop_back();
-	    }
-	    this->ip = loc;
-	    return true;
-	}
+		case InstrKind::I32_XOR: {
+			this->expect_stack({ValueType::i32,ValueType::i32});
+			auto b = std::get<int32_t>(*pop());
+			auto a = std::get<int32_t>(*pop());
+			push(a ^ b);
+			return true;
+		}
 
-	case InstrKind::IF: {
-	    this->expect_stack({ValueType::i32});	
-	    InstrArgs args = instr.args.value();
-	    auto if_blk_info = args.if_.if_block_info; 
-	    auto else_blk_info_opt = args.if_.else_block_info; 
+		case InstrKind::I32_NOT: {
+			this->expect_stack({ValueType::i32});
+			auto a = std::get<int32_t>(*pop());
+			push(~a);
+			return true;
+		}
 
-	    Value val = this->pop().value(); 
-            int32_t v = std::get<int32_t>(val);  
-	
-	    decltype(if_blk_info) blk_info; 
+		case InstrKind::I32_SHL: {
+			this->expect_stack({ValueType::i32,ValueType::i32});
+			auto shift = std::get<int32_t>(*pop());
+			auto value = std::get<int32_t>(*pop());
+			uint32_t amt = static_cast<uint32_t>(shift) & 31u;		//masks the output to prevent UB, by returning the 5 LSBs
+			push(static_cast<int32_t>(static_cast<uint32_t>(value) << amt));
+			return true;
+		}
 
-	    if(v>0) {
-	           blk_info = if_blk_info;
-	    }else if(else_blk_info_opt.has_value()) {
-	           blk_info = else_blk_info_opt.value();
-	    }else {
-	           // skip the block entirely
-		   this->ip = if_blk_info.block_end; 
-		   return true;
-	    }
+		case InstrKind::I32_SHR_U: {
+			this->expect_stack({ValueType::i32,ValueType::i32});
+			auto shift = std::get<int32_t>(*pop());
+			auto value = std::get<int32_t>(*pop());
+			uint32_t amt = static_cast<uint32_t>(shift) & 31u;
+			push(static_cast<int32_t>(static_cast<uint32_t>(value) >> amt));
+			return true;
+		}
 
-	    this->br_labels.push_back(blk_info.block_end);
-	    this->ip = blk_info.block_start; 
-	    return true;
-	}
+		case InstrKind::I32_SHR_S: {
+			this->expect_stack({ValueType::i32,ValueType::i32});
+			auto shift = std::get<int32_t>(*pop());
+			auto value = std::get<int32_t>(*pop());
+			uint32_t amt = static_cast<uint32_t>(shift) & 31u;
+			push(static_cast<int32_t>(value >> amt));
+			return true;
+		}
+
+		case InstrKind::END: {
+			size_t loc = this->br_labels.back(); 
+			this->br_labels.pop_back();
+			this->ip = loc;
+			return true;
+		}
+
+		case InstrKind::BLOCK: {
+			InstrArgs args = instr.args.value();
+			auto bk = args.block_kind;
+			this->br_labels.push_back(bk.block_end);
+			return true;
+		}
+
+		case InstrKind::LOOP: {
+			InstrArgs args = instr.args.value();
+			auto bk = args.block_kind;
+			this->br_labels.push_back(bk.block_start);
+			return true;
+		}
+
+		case InstrKind::BR: {
+			InstrArgs args = instr.args.value();
+			int32_t bk = std::get<int32_t>(args.value);
+			size_t loc;	
+			for(int i = 0;i<=bk;i++) {
+				loc = this->br_labels.back(); 
+			this->br_labels.pop_back();
+			}
+			this->ip = loc;
+			return true;
+		}
+
+		case InstrKind::IF: {
+			this->expect_stack({ValueType::i32});	
+			InstrArgs args = instr.args.value();
+			auto if_blk_info = args.if_.if_block_info; 
+			auto else_blk_info_opt = args.if_.else_block_info; 
+
+			Value val = this->pop().value(); 
+				int32_t v = std::get<int32_t>(val);  
+		
+			decltype(if_blk_info) blk_info; 
+
+			if(v>0) {
+				blk_info = if_blk_info;
+			}else if(else_blk_info_opt.has_value()) {
+				blk_info = else_blk_info_opt.value();
+			}else {
+				// skip the block entirely
+			this->ip = if_blk_info.block_end; 
+			return true;
+			}
+
+			this->br_labels.push_back(blk_info.block_end);
+			this->ip = blk_info.block_start; 
+			return true;
+		}
     }
     return true;
 }

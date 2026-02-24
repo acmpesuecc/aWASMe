@@ -18,6 +18,7 @@ int main() {
 	{InstrKind::IF, { .if_ = {{4,6}} }},
 		{InstrKind::I32_CONST, {.value = 420}},
 	{InstrKind::END},
+    {InstrKind::I32_EQ}     // checks if top 2 elements are equal
     };
 
     vm.load(program);

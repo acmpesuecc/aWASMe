@@ -9,11 +9,18 @@ enum class InstrKind {
     I32_ADD,
     I32_SUB,
     I32_MUL,
+    I32_EQ,
+    I32_AND,
+    I32_OR,
+    I32_XOR,
+    I32_NOT,
+    I32_SHL,
+    I32_SHR_U,      //unsigned
+    I32_SHR_S,      //signed
 
     BLOCK,
     LOOP,
     BR,
-
     IF,
     
     END
