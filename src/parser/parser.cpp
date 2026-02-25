@@ -45,7 +45,39 @@ void parse_code_section(std::span<const uint8_t> data, Module& module)  //incomp
 		}
 	}
 }
+//TYPE SECTION ID=1
+void parse_type_section(std::span<const uint8_t> data, Module& module)
+{
+	size_t secSize=data.size(); // size of the func
+	size_t offset =0;
+	uint32_t funcCount= leb128_decode(data,secSize,offset);
+	std::cout<<"FUNCTION COUNT??:"<<funcCount<<std::endl;
+	while(offset<secSize)
+	{
+		if(data[offset++]!=0x60)
+		{
+			std::cout<<"Type tag mismacthed";
+			return;
+		}
+		uint32_t pramCount=leb128_decode(data,secSize,offset);
+		std::cout<<"Parameter count"<<pramCount<<std::endl;
+		for(uint32_t i=0;i<pramCount;i++)
+		{
+			Type pType =Hex_to_type(data[offset++]);
+			std::cout<<"PARAMETER TYPE OF "<<i<<(pType== Type::I32? " i32":" Other")<<std::endl;
+		}
+		uint32_t returnCount =leb128_decode(data,secSize,offset);
+		std::cout<<"Return count"<<returnCount<<std::endl;
+		for(uint32_t i=0;i<returnCount;i++)
+		{
+			Type rType =Hex_to_type(data[offset++]);
+			std::cout<<"RETURN TYPE OF "<<i<<(rType== Type::I32? " i32":" Other")<<std::endl;
+		}
+	}
+	
 
+	//mapping ?? map hex to types TT
+}
 
 //Helpers
 std::vector<uint8_t> Loadfile(std::string Path)
@@ -68,6 +100,28 @@ std::vector<uint8_t> Loadfile(std::string Path)
 	return data; //otherwise return data
 }
 
+Type Hex_to_type(uint8_t byte)
+{
+	switch (byte)
+    {
+    case 0x7F:
+        return Type::I32;
+        break;
+    case 0x7E:
+        return Type::I64;
+        break;
+    case 0x7D:
+        return Type::F32;
+        break;
+    case 0x7C:
+        return Type::F64;
+        break;
+    default:
+        return Type::NONE;
+        std::cout<<"Invalid Type"<<std::endl;
+        break;
+    }
+}
 size_t leb128_decode(std::span<const uint8_t> data, size_t size, size_t& offset)
 {
     size_t integer=0;

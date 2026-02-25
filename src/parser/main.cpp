@@ -1,6 +1,5 @@
 /* To execute: 
-	g++ -std=c++20 -I./include src/parser/main.cpp src/parser/parser.cpp -o main 
-	./main
+	g++ -std=c++20 -I./include src/parser/main.cpp src/parser/parser.cpp -o main./main
 */
 
 #include<iostream>
@@ -40,7 +39,7 @@ int main (int argc, char* argv[]) {
         uint8_t Id = data[offset]; //read section ID
 		std::cout << "Section ID: " << (int)Id << std::endl;
 		++offset;
-        secSize = leb128_decode(data, filesize, offset); 	//read section size - leb128 changes offset globally to be past the integer by itself 
+		secSize = leb128_decode(data, filesize, offset); //read section size - leb128 changes offset globally to be past the integer by itself 
 		std::cout << "Section size (read from wasm file): " << secSize << std::endl;
 		sectionData = dataspan.subspan(offset, secSize);		//bc of above, section size is not included in section data when passing to parsing functions
 		std::cout << "Section data size (size of program's copy of the section data): " << sectionData.size() << std::endl;
@@ -49,6 +48,7 @@ int main (int argc, char* argv[]) {
         {
          // Call the corrosponding functions here 
             case 1:
+				parse_type_section(sectionData,module);
                 break;
             case 3:
                 break;
