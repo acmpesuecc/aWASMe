@@ -54,6 +54,7 @@ int main (int argc, char* argv[]) {
 				parse_func_section(sectionData,module);
                 break;
             case 8:
+				parse_start_section(sectionData,module);
                 break;
             case 10:
 				//parse_code_section(sectionData, module);	
