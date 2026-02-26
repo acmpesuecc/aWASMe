@@ -74,9 +74,22 @@ void parse_type_section(std::span<const uint8_t> data, Module& module)
 			std::cout<<"RETURN TYPE OF "<<i<<(rType== Type::I32? " i32":" Other")<<std::endl;
 		}
 	}
-	
+}
+void parse_func_section(std::span<const uint8_t>data, Module &module)
+{
+	size_t secSize =data.size();
+	size_t offset =0;
+	size_t funcCount=leb128_decode(data,secSize,offset);
+	std::cout<<"Number of functions:"<<funcCount<<std::endl;
+	int i =0;
+	while(offset<secSize)
+	{
+		size_t index = leb128_decode(data,secSize,offset);
+		std::cout<<"The function at index "<<i<<" uses the signature at index "<<index<<std::endl;
+		i++;
+	}
 
-	//mapping ?? map hex to types TT
+	
 }
 
 //Helpers
