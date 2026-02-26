@@ -91,6 +91,15 @@ void parse_func_section(std::span<const uint8_t>data, Module &module)
 
 	
 }
+void parse_start_section(std::span<const uint8_t>data, Module &module)
+{
+	size_t secSize =data.size();
+	size_t offset =0;
+	size_t start_index =leb128_decode(data,secSize,offset);
+	std::cout<<"Index of start function is: "<<start_index<<std::endl;
+}
+
+
 
 //Helpers
 std::vector<uint8_t> Loadfile(std::string Path)
