@@ -51,6 +51,7 @@ int main (int argc, char* argv[]) {
 				parse_type_section(sectionData,module);
                 break;
             case 3:
+				parse_func_section(sectionData,module);
                 break;
             case 8:
                 break;
