@@ -15,9 +15,10 @@ int main() {
 	{InstrKind::I32_CONST, {.value = 35}}, 
 	{InstrKind::I32_ADD},
 	{InstrKind::I32_CONST, {.value = 1}}, // Change this from 0 to any non zero number and see the result!
-	{InstrKind::IF, { .if_ = {{4,6}} }},
+	{InstrKind::IF, { .if_ = {{4,6,ValueType::i32},std::nullopt,6} }},
 		{InstrKind::I32_CONST, {.value = 420}},
 	{InstrKind::END},
+	{InstrKind::I32_EQ}     // checks if top 2 elements are equal
     };
 
     vm.load(program);

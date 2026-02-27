@@ -32,7 +32,7 @@ ExpectStackError::ExpectStackError(std::vector<ValueType> expected, std::vector<
 	i = 0;
 
 	for(auto it = got.begin(); it != got.end(); it++)  {
-		out += to_string(*it);
+		out += to_string(to_value_type(*it));
 		if(i+1 != got.size()) out += ",";
 		i++;
 	}
@@ -44,3 +44,37 @@ const char* ExpectStackError::what() const noexcept {
 	return this->message.c_str();
 }
 
+UnexpectedInstruction::UnexpectedInstruction(Instruction i,size_t ip) {
+	 this->message = "Unexpected instruction " + i.to_string() + " at index " + std::to_string(ip);
+	
+}
+
+const char * UnexpectedInstruction::what() const noexcept {
+	return this->message.c_str();
+}
+
+const char * StackUnderflowError::what() const noexcept {
+	return this->message.c_str();
+}
+
+
+VMError::VMError(std::exception_ptr e): message(""), inner(e) {
+
+	try { this->throw_inner(); } catch(std::exception& e) {
+	this->what_string = e.what();
+	}
+}
+
+VMError::VMError(std::string msg,std::exception_ptr e): message(msg), inner(e) {
+	try { this->throw_inner(); } catch(std::exception& e) {
+		this->what_string = msg+":\n\t\t"+e.what();
+	}
+}
+
+void VMError::throw_inner() const  {
+	if(this->inner) std::rethrow_exception(this->inner);
+}
+
+const char* VMError::what() const noexcept {
+	return this->what_string.c_str();
+}

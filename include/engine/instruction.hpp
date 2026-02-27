@@ -5,36 +5,65 @@
 #include <value.hpp>
 
 enum class InstrKind {
+    UNREACHABLE,
+    NOP,
+
     I32_CONST,
     I32_ADD,
     I32_SUB,
     I32_MUL,
+    I32_EQ,
+    I32_AND,
+    I32_OR,
+    I32_XOR,
+    I32_NOT,
+    I32_SHL,
+    I32_SHR_U,      //unsigned
+    I32_SHR_S,      //signed
 
     BLOCK,
     LOOP,
     BR,
-
     IF,
     
-    END
+    END,
+
+    CALL,
+    RETURN
 };
 
 typedef struct {
 	size_t block_start; // index into the start of the block (i.e, the instruction which creates the block and NOT the first instruction of the block)
 	size_t block_end; // index into the `end` instruction of the block 
 
+	std::optional<ValueType> return_type;
 }BlockInfo;
 
+enum BrAction {
+	JumpToEnd,
+	JumpToStart
+};
+
+struct Block {
+	BrAction br_action;
+	BlockInfo info;
+};
+
 union InstrArgs {
+	// For numeric instructions
 	Value value;	
 
-	// For `loop`s, `block`s, `if`s, 'else's
-	BlockInfo block_kind;
+	// For `loop`s and `block`s
+	BlockInfo block;
 
 	struct {
 		BlockInfo if_block_info;
 		std::optional<BlockInfo> else_block_info;
+		size_t end_instr; // index into the end instruction of the if block
 	} if_;
+
+	// for br, call
+	size_t index;
 };
 
 struct Instruction {
@@ -47,6 +76,8 @@ struct Instruction {
 
     Instruction(InstrKind k, InstrArgs a):
         kind(k), args(a) {}
+
+    std::string to_string();
 };
 
 #endif
