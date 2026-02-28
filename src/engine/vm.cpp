@@ -214,14 +214,14 @@ bool VM::run_instr(const Instruction& instr) {
 
 					    std::optional<Value> return_value = {};
 
-						ControlFrame req_cf = this->control_frames.at(this->control_frames.size()-bk-1);
+					    ControlFrame req_cf = this->control_frames.at(this->control_frames.size()-bk-1);
 					    if(!req_cf.is_block()) throw UnexpectedInstruction(instr,this->ip);
 
-					    Block required_block = req_cf.block().value();
-					    size_t loc = req_cf.get_branch_target();	
+					    Block required_block = req_cf.get_block().value();
+					    size_t loc = req_cf.get_branch_target().value();	
 					    // If we're jumping out of a loop, then we do not want to break out of the loop, just rerun it
 					    if(required_block.br_action == BrAction::JumpToStart) {
-						    this-ip = loc;
+						    this->ip = loc;
 						    return true;
 					    }
 						
