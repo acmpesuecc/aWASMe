@@ -219,6 +219,13 @@ bool VM::run_instr(const Instruction& instr) {
 						    if(!cf.is_block()) throw UnexpectedInstruction(instr,this->ip);
 
 						    Block blk = cf.get_block().value();
+							
+							// If this is a loop, then we do not want to break out of the loop, just rerun it
+						    if(blk.br_action == BrAction::JumpToStart) {
+							    this-ip = blk.info.block_start;
+							    return true;
+						    }
+							
 						    std::optional<ValueType> expected_return_type = blk.info.return_type;
 						    size_t items_to_pop = this->stack.size() - cf.initial_sp;
 
