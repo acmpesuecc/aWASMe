@@ -1,27 +1,117 @@
 #include"instruction.hpp"
-std::string Instruction::to_string() {
-	    switch(this->kind) {
-		    case InstrKind::I32_CONST: return "i32.const " + ::to_string(this->args.value().value);
-		    case InstrKind::I32_ADD: return "i32.add";
-		    case InstrKind::I32_SUB: return "i32.sub";
-		    case InstrKind::I32_MUL: return "i32.mul" ;
-		    case InstrKind::I32_EQ: return "i32.eq";
-		    case InstrKind::I32_AND: return "i32.add";
-		    case InstrKind::I32_OR: return "i32.or";
-		    case InstrKind::I32_XOR: return "i32.xor";
-		    case InstrKind::I32_NOT: return "i32.not";
-		    case InstrKind::I32_SHL: return "i32.shl";
-		    case InstrKind::I32_SHR_U: return "i32.shru";      
-		    case InstrKind::I32_SHR_S: return "i32.shrs";     
-		    case InstrKind::BLOCK: return "block";
-		    case InstrKind::LOOP: return "loop";
-		    case InstrKind::BR: return "br " + std::to_string(this->args.value().index);
-		    case InstrKind::IF: return "if";
-		    case InstrKind::END: return "end";
-		    case InstrKind::CALL: return "call " + std::to_string(this->args.value().index);
-		    case InstrKind::RETURN: return "return";
-		    case InstrKind::NOP: return "nop";
-		    case InstrKind::UNREACHABLE: return "unreachable";
-	    }
-	__builtin_unreachable();
+
+std::string to_string(Instruction i) {
+	const auto visitor = overloads {
+		[](Nop&) { return std::string("nop"); },
+		[](Unreachable&) { return std::string("unreachable"); },
+		[](LoadConst& lc) {
+			Value v = lc.value;
+			std::string out = "";
+			switch(to_value_type(v)) {
+				case ValueType::i32: 
+					out += "i32.const";
+					break;
+				case ValueType::i64: 
+					out += "i64.const";
+					break;
+				case ValueType::f32: 
+					out += "f32.const";
+					break;
+				case ValueType::f64: 
+					out += "f64.const";
+					break;
+			}
+			out += " " + to_string(v);
+			return out;
+
+		},
+		[](Arithmetic& a) { 
+			std::string out = to_string(a.num_type) + ".";
+			switch(a.op_kind) {
+				case Arithmetic::Kind::Add:
+					out += "add";
+					break;
+				case Arithmetic::Kind::Sub:
+					out += "sub";
+					break;
+				case Arithmetic::Kind::Mul:
+					out += "mul";
+					break;
+			}
+			return out;
+		},
+		[](Cmp& c) {
+			std::string out = to_string(c.num_type) + ".";
+			switch(c.op_kind) {
+				case Cmp::Kind::Eq:
+					out += "eq";
+					break;
+				case Cmp::Kind::Ne:
+					out += "ne";
+					break;
+				case Cmp::Kind::Lt:
+					out += "lt";
+					break;
+				case Cmp::Kind::Gt:
+					out += "gt";
+					break;
+				case Cmp::Kind::Le:
+					out += "le";
+					break;
+				case Cmp::Kind::Ge:
+					out += "ge";
+					break;
+			}
+			return out;
+		},
+		[](Bitwise& b) { 
+			std::string out = b.num_type == Bitwise::VType::i32 ? "i32.": "i64.";
+			switch(b.op_kind) {
+				case Bitwise::Kind::And:
+					out += "and";
+					break;
+				case Bitwise::Kind::Or:
+					out += "or";
+					break;
+				case Bitwise::Kind::Not:
+					out += "not";
+					break;
+				case Bitwise::Kind::Xor:
+					out += "xor";
+					break;
+				case Bitwise::Kind::Shl:
+					out += "shl";
+					break;
+				case Bitwise::Kind::ShrU:
+					out += "shru";
+					break;
+				case Bitwise::Kind::ShrS:
+					out += "shrs";
+					break;
+			}
+			return out;
+
+		},
+		[](Scope& s) { 
+			std::string out = "";
+			switch(s.kind) {
+				case Scope::Kind::Block:
+					out = "block";
+					break;
+				case Scope::Kind::Loop:
+					out = "loop";
+					break;
+				case Scope::Kind::If: // TODO: add else block too
+					out = "if";
+					break;
+			}
+			return out;
+		},
+		[](End&) { return std::string("end"); },
+		[](Return&) { return std::string("return"); },
+		[](Br& b) { return "br" + std::to_string(b.index); },
+		[](Call& c) { return "call" + std::to_string(c.index); }
+	};
+
+	return std::visit(visitor,i);
 }

@@ -22,7 +22,7 @@ ExpectStackError::ExpectStackError(std::vector<ValueType> expected, std::vector<
 ExpectStackError::ExpectStackError(std::vector<ValueType> expected, std::vector<Value> got) {
 	std::string out = "Expected [";
 
-	int i =0;
+	size_t i =0;
 	for(auto it = expected.begin(); it != expected.end(); it++) {
 		out += to_string(*it);
 		if(i+1 != expected.size()) out += ",";
@@ -45,7 +45,7 @@ const char* ExpectStackError::what() const noexcept {
 }
 
 UnexpectedInstruction::UnexpectedInstruction(Instruction i,size_t ip) {
-	 this->message = "Unexpected instruction " + i.to_string() + " at index " + std::to_string(ip);
+	 this->message = "Unexpected instruction " + to_string(i) + " at index " + std::to_string(ip);
 	
 }
 

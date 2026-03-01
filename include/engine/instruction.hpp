@@ -4,34 +4,6 @@
 #include <optional>
 #include <value.hpp>
 
-enum class InstrKind {
-    UNREACHABLE,
-    NOP,
-
-    I32_CONST,
-    I32_ADD,
-    I32_SUB,
-    I32_MUL,
-    I32_EQ,
-    I32_AND,
-    I32_OR,
-    I32_XOR,
-    I32_NOT,
-    I32_SHL,
-    I32_SHR_U,      //unsigned
-    I32_SHR_S,      //signed
-
-    BLOCK,
-    LOOP,
-    BR,
-    IF,
-    
-    END,
-
-    CALL,
-    RETURN
-};
-
 typedef struct {
 	size_t block_start; // index into the start of the block (i.e, the instruction which creates the block and NOT the first instruction of the block)
 	size_t block_end; // index into the `end` instruction of the block 
@@ -49,35 +21,104 @@ struct Block {
 	BlockInfo info;
 };
 
-union InstrArgs {
-	// For numeric instructions
-	Value value;	
+struct Nop {};
+struct Unreachable {};
 
-	// For `loop`s and `block`s
-	BlockInfo block;
 
-	struct {
-		BlockInfo if_block_info;
-		std::optional<BlockInfo> else_block_info;
-		size_t end_instr; // index into the end instruction of the if block
-	} if_;
-
-	// for br, call
-	size_t index;
+struct LoadConst {
+	Value value;
 };
 
-struct Instruction {
-    InstrKind kind;
+struct Arithmetic {
+	enum class Kind {
+		Add,
+		Sub,
+		Mul,
+	};
 
-    std::optional<InstrArgs> args;
-
-    Instruction(InstrKind k):
-        kind(k), args(std::nullopt) {}
-
-    Instruction(InstrKind k, InstrArgs a):
-        kind(k), args(a) {}
-
-    std::string to_string();
+	Kind op_kind;
+	ValueType num_type;
 };
+
+struct Bitwise {
+	enum Kind {
+		And,
+		Or,
+		Not,
+		Xor,
+		Shl,
+		ShrU,
+		ShrS
+	};
+
+	/// The only valid value types that can perform this instruction
+	enum VType {
+		i32,
+		i64
+
+	};
+
+	Kind op_kind;
+	VType num_type;
+};
+
+struct Cmp {
+	enum class Kind {
+		Eq,
+		Ne,
+		Lt,
+		Gt,
+		Le,
+		Ge
+	};
+
+	Kind op_kind;
+	ValueType num_type;
+};
+
+struct Scope {
+	enum Kind {
+		Block,
+		Loop,
+		If,
+	};
+
+	Kind kind;
+	BlockInfo info;
+	std::optional<BlockInfo> else_info; // used in if-else blocks
+	std::optional<size_t> if_else_end; // index into the end of the if-else block
+};
+
+
+struct End {};
+struct Return {};
+
+struct Call {
+	size_t index;	
+};
+
+struct Br { size_t index; };
+
+template<class... Ts>
+struct overloads : Ts... { using Ts::operator()...; };
+
+template<class... Ts>
+overloads(Ts...) -> overloads<Ts...>;
+ 
+using Instruction = std::variant<
+	Nop,
+	Unreachable,
+	LoadConst,
+	Arithmetic,
+	Cmp,	
+	Bitwise,
+	Scope,
+	End,
+	Return,
+	Br,
+	Call
+>;
+
+std::string to_string(Instruction i);
 
 #endif

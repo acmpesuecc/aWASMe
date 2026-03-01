@@ -26,4 +26,3 @@ std::string to_string(Value v) {
 	if(std::holds_alternative<double>(v))  return std::to_string(std::get<double>(v));
 	__builtin_unreachable();
 }
-

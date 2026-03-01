@@ -19,5 +19,4 @@ ValueType to_value_type(Value);
 
 std::string to_string(ValueType v);
 std::string to_string(Value v);
-
 #endif
