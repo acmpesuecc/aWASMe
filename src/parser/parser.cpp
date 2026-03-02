@@ -102,7 +102,7 @@ void parse_global_section(std::span<const uint8_t>data,Module& module)
 {
 	size_t secSize =data.size();
 	size_t offset=0;
-	uint32_t globalCount =leb128_decode(data,secSize,offset);
+	size_t globalCount =leb128_decode(data,secSize,offset);
 	std::cout<<"Number of globals are: "<<globalCount<<std::endl;
 	for(uint32_t i=0;i<globalCount;i++)
 	{
@@ -112,12 +112,27 @@ void parse_global_section(std::span<const uint8_t>data,Module& module)
 		std::cout<<"mut: "<<mut<<std::endl;
 		Type type=Hex_to_type(data[offset++]); //Use InstrKind for this 
 		std::cout<<"opcode is : "<<(type == Type::I32_const? " i32.const\n":" Other\n");
-		uint32_t value = leb128_decode(data , secSize,offset); 
+		size_t value = leb128_decode(data , secSize,offset); 
 		std::cout<<"Value is : "<<value<<std::endl;
 		offset++;
 	}
 }
-
+void parse_mem_section(std::span<const uint8_t>data,Module& module)
+{
+	size_t secSize=data.size();
+	size_t offset=0;
+	size_t MemCount = leb128_decode(data,secSize,offset);
+	bool hasMax =data[offset++];
+	size_t min = leb128_decode(data,secSize,offset);
+	size_t max;
+	std::cout<<"Min: "<<min<<std::endl;
+	if(hasMax)
+	{
+		max= leb128_decode(data,secSize,offset);
+		std::cout<<"Max: "<<max<<std::endl;
+	}
+	
+}
 
 //Helpers
 std::vector<uint8_t> Loadfile(std::string Path)
