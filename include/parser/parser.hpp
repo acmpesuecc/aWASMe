@@ -8,6 +8,7 @@ void parse_code_section(std::span<const uint8_t> data, Module& module);
 void parse_type_section(std::span<const uint8_t> data ,Module& module);
 void parse_func_section(std::span<const uint8_t>data ,Module& module);
 void parse_start_section(std::span<const uint8_t>data, Module& module);
+void parse_global_section(std::span<const uint8_t>data,Module& module);
 //Helpers
 std::vector<uint8_t> Loadfile(std::string Path);
 size_t leb128_decode(std::span<const uint8_t> data, size_t size, size_t& offset);
@@ -19,6 +20,11 @@ enum class Type{
     I64,
     F32,
     F64,
+    I32_const,
+    I64_const,
+    F32_const,
+    F64_const,
+    Global_get,
     NONE
 };
 

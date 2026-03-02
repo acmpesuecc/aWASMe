@@ -98,7 +98,25 @@ void parse_start_section(std::span<const uint8_t>data, Module &module)
 	size_t start_index =leb128_decode(data,secSize,offset);
 	std::cout<<"Index of start function is: "<<start_index<<std::endl;
 }
-
+void parse_global_section(std::span<const uint8_t>data,Module& module)
+{
+	size_t secSize =data.size();
+	size_t offset=0;
+	uint32_t globalCount =leb128_decode(data,secSize,offset);
+	std::cout<<"Number of globals are: "<<globalCount<<std::endl;
+	for(uint32_t i=0;i<globalCount;i++)
+	{
+		Type gType =Hex_to_type(data[offset++]);
+		std::cout<<"Type is: "<<(gType== Type::I32? " i32\n":" Other\n");
+		bool mut =data[offset++];
+		std::cout<<"mut: "<<mut<<std::endl;
+		Type type=Hex_to_type(data[offset++]); //Use InstrKind for this 
+		std::cout<<"opcode is : "<<(type == Type::I32_const? " i32.const\n":" Other\n");
+		uint32_t value = leb128_decode(data , secSize,offset); 
+		std::cout<<"Value is : "<<value<<std::endl;
+		offset++;
+	}
+}
 
 
 //Helpers
@@ -138,6 +156,21 @@ Type Hex_to_type(uint8_t byte)
     case 0x7C:
         return Type::F64;
         break;
+	case 0x41:
+		return Type::I32_const;
+		break;
+	case 0x42:
+		return Type::I64_const;
+		break;
+	case 0x43:
+		return Type::F32_const;
+		break;
+	case 0x44:
+		return Type::F64_const;
+		break;
+	case 0x23:
+		return Type::Global_get;
+		break;
     default:
         return Type::NONE;
         std::cout<<"Invalid Type"<<std::endl;
