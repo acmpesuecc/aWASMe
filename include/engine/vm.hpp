@@ -73,5 +73,8 @@ class VM {
 
 		/// Given a vector of value types, validates the stack from the BACK and returns. Unlike expect_stack, this function needs the stack to be exactly equal to expected_values.
 		void expect_stack_exact(std::vector<ValueType> expected_values);
+
+		/// Sets the ip to the given ip after performing bounds checking. If given index >= current number of instructions then InvalidInstructionPointer exception is thrown
+		void set_ip(size_t index);
 };
 #endif

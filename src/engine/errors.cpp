@@ -57,6 +57,10 @@ const char * StackUnderflowError::what() const noexcept {
 	return this->message.c_str();
 }
 
+const char* InvalidInstructionPointer::what() const noexcept {
+	return this->message.c_str();
+}
+
 
 VMError::VMError(std::exception_ptr e): message(""), inner(e) {
 

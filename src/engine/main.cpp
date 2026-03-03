@@ -11,14 +11,13 @@ int main() {
 
 	std::vector<Instruction> program = { // proof of concept
 		LoadConst{34},
-		End{},
 		LoadConst{35},
 		Arithmetic{.op_kind = Arithmetic::Kind::Add,.num_type = ValueType::i32},
 		LoadConst{0}, // Change this from 0 to any non zero number and see the result!
-	Scope{.kind = Scope::Kind::If,.info = BlockInfo{.block_start = 4,6,ValueType::i32},.else_info=BlockInfo{6,8,ValueType::i32},8},
+	Scope{.kind = Scope::Kind::If,.info = BlockInfo{.block_start = 4,6,ValueType::i32},.else_info=BlockInfo{6,80,ValueType::i32},80},
 			LoadConst{400},
 		End{},
-			LoadConst{69}, // else block
+			 LoadConst{69}, // else block
 		End{},
 		Cmp{.op_kind = Cmp::Kind::Eq,.num_type = ValueType::i32}
 	};
