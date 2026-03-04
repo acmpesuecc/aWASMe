@@ -1,6 +1,5 @@
 #include"vm.hpp"
 #include<stdexcept>
-#include<iostream>
 #include"errors.hpp"
 
 bool ControlFrame::is_block() {
@@ -456,7 +455,6 @@ bool VM::run_instr(const Instruction& instr) {
 
 void VM::run() {
 	while (ip < instructions.size()) {
-		//std::cout << "Running: " << to_string(instructions[ip]) << "\n";
 		try {
 			if (!run_instr(instructions[ip])) {
 				break;
