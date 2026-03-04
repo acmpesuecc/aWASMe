@@ -9,17 +9,35 @@
 int main() {
 	VM vm;
 
-	std::vector<Instruction> program = { // proof of concept
-		LoadConst{34},
-		LoadConst{35},
-		Arithmetic{.op_kind = Arithmetic::Kind::Add,.num_type = ValueType::i32},
-		LoadConst{0}, // Change this from 0 to any non zero number and see the result!
-	Scope{.kind = Scope::Kind::If,.info = BlockInfo{.block_start = 4,6,ValueType::i32},.else_info=BlockInfo{6,80,ValueType::i32},80},
-			LoadConst{400},
+	FunctionInfo fi = {.block_info = BlockInfo{2,18,ValueType::i32},{ValueType::i32},{}};
+	size_t n = vm.register_function(fi);
+
+	int32_t start_num = 0
+	int32_t end_num = 420;
+	int32_t step = 1;
+
+	// proof of concept
+	// this program start from start_num, add step and repeat until you are greater than or equal to end_num
+	std::vector<Instruction> program = { 
+		LoadConst{start_num},
+		Call{n},
+		Unreachable{},
+		Scope({Scope::Kind::Loop,BlockInfo{3,15,ValueType::i32},std::nullopt,std::nullopt}),
+			Local{.kind=Local::Kind::Get,.index=0},
+			LoadConst{step},
+			Arithmetic{.op_kind=Arithmetic::Kind::Add,.num_type=ValueType::i32},
+			Local{.kind=Local::Kind::Set,.index=0},
+			LoadConst{end_num},
+			Local{.kind=Local::Kind::Get,.index=0},
+			Cmp{Cmp::Kind::Lt,ValueType::i32},
+			Scope({Scope::Kind::If,BlockInfo{11,13,{}},{},13}),
+				Br{1},
+			End{},
+			Local{.kind=Local::Kind::Get,.index=0},
 		End{},
-			 LoadConst{69}, // else block
-		End{},
-		Cmp{.op_kind = Cmp::Kind::Eq,.num_type = ValueType::i32}
+		Local{.kind=Local::Kind::Get,.index=0},
+		Return{},
+		End{}
 	};
 
 	vm.load(program);

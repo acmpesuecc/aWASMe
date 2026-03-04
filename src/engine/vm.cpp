@@ -1,5 +1,6 @@
 #include"vm.hpp"
 #include<stdexcept>
+#include<iostream>
 #include"errors.hpp"
 
 bool ControlFrame::is_block() {
@@ -32,6 +33,17 @@ std::optional<ActivationRecord> ControlFrame::get_activation_record() {
 std::optional<ValueType> ControlFrame::get_return_type() {
 	if(this->is_activation_record()) return this->get_activation_record().value().get_return_type();
 	return this->get_block().value().info.return_type;
+}
+
+
+std::optional<ActivationRecord*> ControlFrame::get_activation_record_ptr() {
+	if(this->is_activation_record()) return std::get_if<ActivationRecord>(&this->inner);
+	return {};
+}
+
+size_t ControlFrame::get_end() {
+	if(this->is_activation_record()) return std::get<ActivationRecord>(this->inner).get_func_info().block_info.block_end;
+	return std::get<Block>(this->inner).info.block_end;
 }
 
 VM::VM() {
@@ -189,7 +201,9 @@ bool VM::run_instr(const Instruction& instr) {
 			Value v1 = this->pop().value();
 			Value v2 = this->pop().value();
 
-			this->push(std::visit(CmpVisitor{instr.op_kind},v1,v2));
+			Value res = std::visit(CmpVisitor{instr.op_kind},v1,v2);
+
+			this->push(res);
 			return true;
 
 		},
@@ -236,7 +250,7 @@ bool VM::run_instr(const Instruction& instr) {
 				}else if(scope.else_info.has_value()) {
 					b.info = scope.else_info.value();
 				}else {
-					this->ip = scope.info.block_end; // just exit if condition was false and there wass no other else branch to go out
+					this->set_ip(scope.info.block_end); // just exit if condition was false and there wass no other else branch to go out
 					return true;
 				}
 
@@ -248,7 +262,7 @@ bool VM::run_instr(const Instruction& instr) {
 			}
 			ControlFrame cf = ControlFrame(b,this->stack.size());
 			this->control_frames.push_back(cf);
-			this->ip = b.info.block_start;
+			this->set_ip(b.info.block_start);
 
 			return true;
 		},
@@ -273,9 +287,9 @@ bool VM::run_instr(const Instruction& instr) {
 			for(size_t i=0;i<n_to_pop;i++) this->pop();
 			if(return_val.has_value()) this->push(return_val.value());
 
-			this->ip = cf.get_branch_target().value();
+			this->set_ip(cf.get_end());
 			this->control_frames.pop_back(); 
-
+			
 			return true;
 
 		},
@@ -294,7 +308,9 @@ bool VM::run_instr(const Instruction& instr) {
 			size_t loc = req_cf.get_branch_target().value();	
 			// If we're jumping out of a loop, then we do not want to break out of the loop, just rerun it
 			if(required_block.br_action == BrAction::JumpToStart) {
-				this->ip = loc;
+				// pop the other control frames from the stack
+				for(size_t i = 0; i<bk;i++) this->control_frames.pop_back();
+				this->set_ip(loc);
 				return true;
 			}
 
@@ -319,7 +335,7 @@ bool VM::run_instr(const Instruction& instr) {
 
 				this->control_frames.pop_back();
 			}
-			this->ip = loc;
+			this->set_ip(loc);
 			if(return_value.has_value()) this->push(return_value.value());
 			return true;
 		},
@@ -354,7 +370,7 @@ bool VM::run_instr(const Instruction& instr) {
 				// We terminate the program here because the only (legal) way a function can be called without having a return address is if it was from external sources or if it was a start function, which are legal and aren't expected to error.
 				if(!return_to.has_value()) return false;
 
-				this->ip = return_to.value();
+				this->set_ip(return_to.value());
 
 				break;
 			}
@@ -375,12 +391,62 @@ bool VM::run_instr(const Instruction& instr) {
 				locals.push_back(*it);
 			}
 
+			// now load the actual declared locals
+			for(auto it = fn_info.locals.begin(); it != fn_info.locals.end(); it++) {
+				locals.push_back(zero_from_value_type(*it));
+			}
+
 			ActivationRecord a = ActivationRecord(fn_info, locals);
 			a.return_to = return_to_index;
 			ControlFrame cf = ControlFrame(a,this->stack.size());
 			this->control_frames.push_back(cf);	
 
-			this->ip = fn_blk_info.block_start;
+			this->set_ip(fn_blk_info.block_start);
+
+			return true;
+		},
+
+		[&](const Local& local) {
+			auto it = this->control_frames.begin();
+			for(;it != this->control_frames.end() ; it++) {
+				if(it->is_activation_record()) break; 
+			}
+
+			if(!it->is_activation_record()) return false; // TODO: throw an error. I dont know what type of error would be good. Maybe an InternalError?
+
+			ActivationRecord* cf = it->get_activation_record_ptr().value();
+
+			switch(local.kind) {
+				case Local::Kind::Get:
+					{
+						std::optional<Value> v = cf->get_local(local.index);
+						if(!v.has_value()) throw InvalidIndex(InvalidIndex::IndexFor::Local,local.index);
+						this->push(v.value());
+						break;
+					}
+				case Local::Kind::Set:
+						{
+							std::optional<Value> v = cf->get_local(local.index);
+							if(!v.has_value()) throw InvalidIndex(InvalidIndex::IndexFor::Local,local.index);
+
+							std::vector<ValueType> exp = {to_value_type(v.has_value())};
+							this->expect_stack(exp);
+
+							cf->set_local_raw(local.index,this->pop().value());
+							break;
+						}
+				case Local::Kind::Tee:
+						{
+							std::optional<Value> v = cf->get_local(local.index);
+							if(!v.has_value()) throw InvalidIndex(InvalidIndex::IndexFor::Local,local.index);
+
+							std::vector<ValueType> exp = {to_value_type(v.has_value())};
+							this->expect_stack(exp);
+
+							cf->set_local_raw(local.index,this->stack.back());
+							break;
+						}
+			}
 
 			return true;
 		}
@@ -390,6 +456,7 @@ bool VM::run_instr(const Instruction& instr) {
 
 void VM::run() {
 	while (ip < instructions.size()) {
+		//std::cout << "Running: " << to_string(instructions[ip]) << "\n";
 		try {
 			if (!run_instr(instructions[ip])) {
 				break;
@@ -448,4 +515,9 @@ void VM::expect_stack_exact(std::vector<ValueType> expected_values) {
 size_t VM::register_function(FunctionInfo f) {
 	this->functions.push_back(f);	
 	return this->functions.size() - 1;
+}
+
+void VM::set_ip(size_t to) {
+	if(this->instructions.size() <= to) throw InvalidInstructionPointer(to,this->instructions.size());
+	this->ip = to;
 }
