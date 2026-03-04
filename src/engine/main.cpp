@@ -12,7 +12,7 @@ int main() {
 	FunctionInfo fi = {.block_info = BlockInfo{2,18,ValueType::i32},{ValueType::i32},{}};
 	size_t n = vm.register_function(fi);
 
-	int32_t start_num = 0
+	int32_t start_num = 0;
 	int32_t end_num = 420;
 	int32_t step = 1;
 
