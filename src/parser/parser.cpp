@@ -286,6 +286,35 @@ void parse_element_section(std::span<const uint8_t>data,Module& module)
 
 	}
 }
+void parse_data_section(std::span<const uint8_t>data,Module& module)
+{
+	size_t secSize = data.size();
+	size_t offset = 0;
+	size_t dataCount=leb128_decode(data,secSize,offset);
+	for(size_t i =0;i<dataCount;i++)
+	{
+		Flag flag =static_cast<Flag>(leb128_decode(data,secSize,offset));
+		size_t byteCount=0;
+		if(flag!=Flag::Passive)
+		{
+			if(flag==Flag::ActiveExplicit)
+			size_t memIND=leb128_decode(data,secSize,offset);
+			uint8_t offsetO=data[offset++];
+			Type opcode = Hex_to_type(offsetO);
+			std::cout<<"OPCODE"<<(opcode==Type::I32_const?" i32.const\n": " Other\n");
+			size_t offsetVal=leb128_decode(data,secSize,offset);
+			offset++;//skipping END Byte
+			byteCount=leb128_decode(data,secSize,offset);
+		}
+	
+		for(size_t i=0; i<byteCount;i++)
+		{
+			uint8_t byte=data[offset++];
+			std::cout<<"BYTE "<<byte<<std::endl;
+		}
+
+	}
+}
 //Helpers
 std::vector<uint8_t> Loadfile(std::string Path)
 {

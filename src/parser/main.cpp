@@ -74,6 +74,9 @@ int main (int argc, char* argv[]) {
             case 10:
 				//parse_code_section(sectionData, module);	
                 break;
+			case 11:
+				parse_data_section(sectionData,module);
+				break;
             default:
                 break;
         } 
