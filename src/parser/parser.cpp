@@ -315,6 +315,22 @@ void parse_data_section(std::span<const uint8_t>data,Module& module)
 
 	}
 }
+void parse_export_section(std::span<const uint8_t>data,Module& module)
+{
+	size_t secSize=data.size();
+	size_t offset =0;
+	size_t exportCount=leb128_decode(data,secSize,offset);
+	for(size_t i=0;i<exportCount;i++)
+	{
+		std::string name =read_string(data ,offset);
+		std::cout<<"Export Name: "<<name<<std::endl;
+		Tag tag =static_cast<Tag>(data[offset++]);
+		std::cout<<"Tag "<<(tag==Tag::Function? "Function\n":"Other\n");
+		size_t index=leb128_decode(data,secSize,offset);
+		std::cout<<"Index "<<index<<std::endl;
+	}
+
+}
 //Helpers
 std::vector<uint8_t> Loadfile(std::string Path)
 {

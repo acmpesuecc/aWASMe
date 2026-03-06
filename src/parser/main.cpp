@@ -65,6 +65,9 @@ int main (int argc, char* argv[]) {
 			case 6:
 				parse_global_section(sectionData,module);
 				break;
+			case 7:
+				parse_export_section(sectionData,module);
+				break;
             case 8:
 				parse_start_section(sectionData,module);
                 break;

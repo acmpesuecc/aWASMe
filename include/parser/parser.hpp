@@ -14,6 +14,7 @@ void parse_global_section(std::span<const uint8_t>data,Module& module);
 void parse_table_section(std::span<const uint8_t>data,Module& module);
 void parse_element_section(std::span<const uint8_t>data,Module& module);
 void parse_data_section(std::span<const uint8_t>data,Module& module);
+void parse_export_section(std::span<const uint8_t>data ,Module& module);
 //Helpers
 std::vector<uint8_t> Loadfile(std::string Path);
 size_t leb128_decode(std::span<const uint8_t> data, size_t size, size_t& offset);
@@ -46,6 +47,13 @@ enum class Flag : uint8_t
     PassiveExpr             = 0x05,  // passive, expressions
     ActiveExplicitExpr      = 0x06,  // active, explicit table, expressions
     DeclarativeExpr         = 0x07,  // declarative, expressions
+};
+enum class Tag : uint8_t
+{
+       Function = 0x00,
+       Table =0x01,
+       Memory =0x02,
+       Global=0x03, 
 };
 
 Type Hex_to_type(uint8_t byte);
