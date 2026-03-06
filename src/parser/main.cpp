@@ -50,6 +50,9 @@ int main (int argc, char* argv[]) {
             case 1:
 				parse_type_section(sectionData,module);
                 break;
+			case 2:
+				parse_import_section(sectionData,module);
+				break;
             case 3:
 				parse_func_section(sectionData,module);
                 break;
@@ -68,6 +71,7 @@ int main (int argc, char* argv[]) {
             default:
                 break;
         } 
+		std::cout<<"--------------------------------------------------------------------------\n";
 		
 		offset+=secSize;
     }

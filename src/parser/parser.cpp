@@ -51,7 +51,7 @@ void parse_type_section(std::span<const uint8_t> data, Module& module)
 	size_t secSize=data.size(); // size of the func
 	size_t offset =0;
 	uint32_t funcCount= leb128_decode(data,secSize,offset);
-	std::cout<<"FUNCTION COUNT??:"<<funcCount<<std::endl;
+	std::cout<<"FUNCTION COUNT:"<<funcCount<<std::endl;
 	while(offset<secSize)
 	{
 		if(data[offset++]!=0x60)
@@ -134,6 +134,73 @@ void parse_mem_section(std::span<const uint8_t>data,Module& module)
 	
 }
 
+void parse_import_section(std::span<const uint8_t>data, Module& module)
+{
+	size_t secSize = data.size();
+	size_t offset = 0;
+	size_t importCount = leb128_decode(data,secSize,offset);
+	std::cout<<"Import Count: "<<importCount<<std::endl;
+	for(size_t i =0; i<importCount; i++)
+	{
+		std::string modStr =read_string(data,offset);
+		std::cout<<"Import from: "<<modStr<<std::endl;
+		std::string feildStr=read_string(data,offset);
+		std::cout<<"feild name: "<<feildStr<<std::endl;
+		uint8_t descTag = data[offset++];
+		switch (descTag)
+		{
+			case 0x00:
+			{
+				std::cout<<"Function"<<std::endl;
+				size_t func_index = leb128_decode(data,secSize,offset);
+				break;
+			}
+			case 0x01:
+			{
+				uint8_t refType= data[offset++];
+				std::cout<<"RefType: "<<(refType ==0x70? "funcref\n":"")<<(refType ==0x6F? "externref\n":"");
+				bool hasMax = data[offset++];
+				size_t min = leb128_decode(data,secSize,offset);
+				size_t max;
+				std::cout<<"Min: "<<min<<std::endl;
+				if(hasMax)
+				{
+					max= leb128_decode(data,secSize,offset);
+					std::cout<<"Max: "<<max<<std::endl;
+				}
+				break;
+			}
+			case 0x02:
+			{
+				std::cout<<"Memory"<<std::endl;
+				bool hasMax =data[offset++];
+				size_t min = leb128_decode(data,secSize,offset);
+				size_t max;
+				std::cout<<"Min: "<<min<<std::endl;
+				if(hasMax)
+				{
+					max= leb128_decode(data,secSize,offset);
+					std::cout<<"Max: "<<max<<std::endl;
+				}
+				break;
+			}
+			case 0x03:
+			{
+				std::cout<<"Gloabal"<<std::endl;
+				Type gType =Hex_to_type(data[offset++]);
+				std::cout<<"Type is: "<<(gType== Type::I32? " i32\n":" Other\n");
+				bool mut =data[offset++];
+				std::cout<<"mut: "<<mut<<std::endl;
+				break;
+			}
+			default:
+				break;
+		
+		}
+
+	
+	}
+}
 //Helpers
 std::vector<uint8_t> Loadfile(std::string Path)
 {
@@ -161,36 +228,38 @@ Type Hex_to_type(uint8_t byte)
     {
     case 0x7F:
         return Type::I32;
-        break;
     case 0x7E:
         return Type::I64;
-        break;
     case 0x7D:
         return Type::F32;
-        break;
     case 0x7C:
         return Type::F64;
-        break;
 	case 0x41:
 		return Type::I32_const;
-		break;
 	case 0x42:
 		return Type::I64_const;
-		break;
 	case 0x43:
 		return Type::F32_const;
-		break;
 	case 0x44:
 		return Type::F64_const;
-		break;
 	case 0x23:
 		return Type::Global_get;
-		break;
     default:
-        return Type::NONE;
         std::cout<<"Invalid Type"<<std::endl;
-        break;
+		return Type::NONE;
     }
+}
+std::string read_string(std::span<const uint8_t>data,size_t &offset)
+{
+	size_t secSize = data.size();
+	size_t len =leb128_decode(data,secSize,offset);
+	std::cout<<"Length: "<<len<<std::endl;
+	std::string bytes ="";
+	for(size_t j=0;j<len;j++)
+	{
+		bytes +=(char)(data[offset++]);
+	}
+	return bytes;
 }
 size_t leb128_decode(std::span<const uint8_t> data, size_t size, size_t& offset)
 {
