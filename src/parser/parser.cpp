@@ -220,6 +220,72 @@ void parse_import_section(std::span<const uint8_t>data, Module& module)
 	
 	}
 }
+void parse_element_section(std::span<const uint8_t>data,Module& module)
+{
+	size_t secSize =data.size();
+	size_t offset = 0;
+	size_t subSecCount=leb128_decode(data,secSize,offset);
+	for(size_t i =0;i<subSecCount;i++)
+	{
+		Flag flag =static_cast<Flag>(leb128_decode(data,secSize,offset));
+		switch (flag)
+		{
+			case Flag::ActiveImplicit:
+			case Flag::ActiveImplicitExpr:
+			{
+				uint8_t offsetO=data[offset++];
+				Type opcode = Hex_to_type(offsetO);
+				std::cout<<"OPCODE"<<(opcode==Type::I32_const?" i32.const\n": " Other\n");
+				size_t offsetVal=leb128_decode(data,secSize,offset);
+				offset++;//skipping END Byte
+				size_t eleCount =leb128_decode(data,secSize,offset);
+   				std::cout << "Offset: "  << offsetVal<< std::endl;
+   				std::cout << "Count: "   << eleCount << std::endl;
+				if(flag==Flag::ActiveImplicit)
+				parse_function(data,eleCount,offset,secSize,module);
+				else if(flag==Flag::ActiveImplicitExpr)
+				parse_expression(data,eleCount,offset,secSize,module);
+				break;
+				
+			}
+			case Flag::ActiveExplicit:
+			case Flag::ActiveExplicitExpr:
+			{
+				size_t tableIND=leb128_decode(data,secSize,offset);
+				uint8_t offsetO=data[offset++];
+				Type opcode = Hex_to_type(offsetO);
+				std::cout<<"OPCODE"<<(opcode==Type::I32_const?"i32.const\n": "Other\n");
+				offset++;//skipping END Byte
+				uint8_t eleKind = data[offset++];//always 0x00
+				std::cout<<"Element kind: "<<(eleKind ==0x00 ?"FuncRef" :"NONE");
+				size_t eleCount = leb128_decode(data,secSize,offset);
+				if(flag==Flag::ActiveExplicit)
+				parse_function(data,eleCount,offset,secSize,module);
+				else if(flag==Flag::ActiveExplicitExpr)
+				parse_expression(data,eleCount,offset,secSize,module);
+				break;
+			}
+			case Flag::Passive:
+			case Flag::PassiveExpr:
+			case Flag::DeclarativeExpr:
+			case Flag::Declarative:
+			{
+				uint8_t eleKind =data[offset++];//always 0x00
+				std::cout<<"Element kind: "<<(eleKind ==0x00 ?"FuncRef" :"NONE");
+				size_t eleCount = leb128_decode(data,secSize,offset);
+				if(flag==Flag::Passive||flag==Flag::Declarative)
+				parse_function(data,eleCount,offset,secSize,module);
+				else if(flag==Flag::DeclarativeExpr||flag==Flag::PassiveExpr)
+				parse_expression(data,eleCount,offset,secSize,module);
+				break;
+			}
+		default:
+			break;
+		}
+		
+
+	}
+}
 //Helpers
 std::vector<uint8_t> Loadfile(std::string Path)
 {
@@ -267,6 +333,45 @@ Type Hex_to_type(uint8_t byte)
         std::cout<<"Invalid Type"<<std::endl;
 		return Type::NONE;
     }
+}
+void parse_function(std::span<const uint8_t>data,size_t eleCount,size_t &offset,size_t secSize,Module& module)
+{
+	for(size_t i=0;i<eleCount;i++)
+	{
+		size_t func_ID = leb128_decode(data,secSize,offset);
+		std::cout << "func index: " << func_ID << std::endl;
+	}
+}
+void parse_expression(std::span<const uint8_t>data,size_t eleCount,size_t &offset,size_t secSize,Module& module)
+{
+	uint8_t opcode = leb128_decode(data,secSize,offset);
+	switch (opcode)
+	{
+	case 0xD2: //ref.func
+	{
+		size_t funcIND=leb128_decode(data,secSize,offset);
+		std::cout << "ref.func: " << funcIND<< std::endl;
+		offset++;//skipping END Byte(END BYTE = 0x0B)
+		break;
+	}
+	case 0xD0:
+	{
+		//ref.null
+		uint8_t reftype =data[offset++];//can be 0x70||0x6F
+		std::cout << "ref.null refType: " << (reftype ==0x70 ?"funcRef" :"externref")<< std::endl;
+		offset++;
+		break;
+	}
+	case 0x23:
+	{
+		size_t globalIND=leb128_decode(data,secSize,offset);
+		std::cout<< "global.get: " << globalIND << std::endl;
+		offset++;
+		break;
+	}
+	default:
+		break;
+	}
 }
 std::string read_string(std::span<const uint8_t>data,size_t &offset)
 {

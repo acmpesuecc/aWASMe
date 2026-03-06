@@ -68,6 +68,9 @@ int main (int argc, char* argv[]) {
             case 8:
 				parse_start_section(sectionData,module);
                 break;
+			case 9:
+				parse_element_section(sectionData,module);
+				break;
             case 10:
 				//parse_code_section(sectionData, module);	
                 break;
