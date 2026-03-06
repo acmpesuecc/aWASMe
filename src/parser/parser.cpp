@@ -133,7 +133,26 @@ void parse_mem_section(std::span<const uint8_t>data,Module& module)
 	}
 	
 }
-
+void parse_table_section(std::span<const uint8_t>data,Module& module)
+{
+	size_t secSize =data.size();
+	size_t offset =0;
+	size_t tableCount= leb128_decode(data,secSize,offset);
+	for(size_t i=0;i<tableCount;i++)
+	{
+		uint8_t refType= data[offset++];
+		std::cout<<"RefType: "<<(refType ==0x70? "funcref\n":"")<<(refType ==0x6F? "externref\n":"");
+		bool hasMax = data[offset++];
+		size_t min = leb128_decode(data,secSize,offset);
+		size_t max;
+		std::cout<<"Min: "<<min<<std::endl;
+		if(hasMax)
+		{
+		max= leb128_decode(data,secSize,offset);
+		std::cout<<"Max: "<<max<<std::endl;
+		}
+	}
+}
 void parse_import_section(std::span<const uint8_t>data, Module& module)
 {
 	size_t secSize = data.size();

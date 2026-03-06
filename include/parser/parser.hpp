@@ -11,6 +11,7 @@ void parse_start_section(std::span<const uint8_t>data, Module& module);
 void parse_mem_section(std::span<const uint8_t>data,Module& module);
 void parse_import_section(std::span<const uint8_t>data, Module& module);
 void parse_global_section(std::span<const uint8_t>data,Module& module);
+void parse_table_section(std::span<const uint8_t>data,Module& module);
 //Helpers
 std::vector<uint8_t> Loadfile(std::string Path);
 size_t leb128_decode(std::span<const uint8_t> data, size_t size, size_t& offset);

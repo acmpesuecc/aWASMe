@@ -56,6 +56,9 @@ int main (int argc, char* argv[]) {
             case 3:
 				parse_func_section(sectionData,module);
                 break;
+			case 4:
+				parse_table_section(sectionData,module);
+				break;
 			case 5:
 				parse_mem_section(sectionData,module);
 				break;
