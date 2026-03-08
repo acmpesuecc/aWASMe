@@ -24,11 +24,11 @@ int main() {
 
 	std::cout << "Enter your option\n\t0. To add\n\t1. To subtract\n\t2. To multiply\n\t";
 	std::cin >> opt;
-	if(!(0<=opt<=to_mul)) {
-
+	if(opt < 0 || opt > to_mul){
 		std::cout << "Invalid option " << opt << ". Aborting\n";
 		return 1;
 	}
+
 
 	std::vector<Instruction> program = { 
 		LoadConst{opt},

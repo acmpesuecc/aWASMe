@@ -120,7 +120,7 @@ std::string to_string(Instruction i) {
 				case Local::Kind::Set:
 					out += "set";
 					break;
-				case Local::Kind::Tee: // TODO: add else block too
+				case Local::Kind::Tee:
 					out += "tee";
 					break;
 			}
