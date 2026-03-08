@@ -9,36 +9,57 @@
 int main() {
 	VM vm;
 
-	FunctionInfo fi = {.block_info = BlockInfo{2,18,ValueType::i32},{ValueType::i32},{}};
-	size_t n = vm.register_function(fi);
+	// Calculator program
+	// takes in two numbers and another number for the type of operation to perform
 
-	int32_t start_num = 0
-	int32_t end_num = 420;
-	int32_t step = 1;
+	const int32_t to_add = 0;
+	const int32_t to_sub = 1;
+	const int32_t to_mul = 2;
 
-	// proof of concept
-	// this program start from start_num, add step and repeat until you are greater than or equal to end_num
+	int32_t a,b;
+	int32_t opt;
+
+	std::cout << "Enter the i32 integer operands: \n";
+	std::cin >> a >> b;
+
+	std::cout << "Enter your option\n\t0. To add\n\t1. To subtract\n\t2. To multiply\n\t";
+	std::cin >> opt;
+	if(!(0<=opt<=to_mul)) {
+
+		std::cout << "Invalid option " << opt << ". Aborting\n";
+		return 1;
+	}
+
 	std::vector<Instruction> program = { 
-		LoadConst{start_num},
-		Call{n},
-		Unreachable{},
-		Scope({Scope::Kind::Loop,BlockInfo{3,15,ValueType::i32},std::nullopt,std::nullopt}),
-			Local{.kind=Local::Kind::Get,.index=0},
-			LoadConst{step},
-			Arithmetic{.op_kind=Arithmetic::Kind::Add,.num_type=ValueType::i32},
-			Local{.kind=Local::Kind::Set,.index=0},
-			LoadConst{end_num},
-			Local{.kind=Local::Kind::Get,.index=0},
-			Cmp{Cmp::Kind::Lt,ValueType::i32},
-			Scope({Scope::Kind::If,BlockInfo{11,13,{}},{},13}),
-				Br{1},
-			End{},
-			Local{.kind=Local::Kind::Get,.index=0},
+		LoadConst{opt},
+		LoadConst{to_add},
+		Cmp{Cmp::Kind::Eq, ValueType::i32},
+		Scope{.kind = Scope::Kind::If,.info = BlockInfo{3,8,ValueType::i32},std::nullopt,std::nullopt},
+			LoadConst{b},	
+			LoadConst{a},
+			Arithmetic{Arithmetic::Kind::Add, ValueType::i32},
+			Unreachable{},
 		End{},
-		Local{.kind=Local::Kind::Get,.index=0},
-		Return{},
+		LoadConst{opt},
+		LoadConst{to_sub},
+		Cmp{Cmp::Kind::Eq, ValueType::i32},
+		Scope{.kind = Scope::Kind::If,.info = BlockInfo{12,17,ValueType::i32},std::nullopt,std::nullopt},
+			LoadConst{b},	
+			LoadConst{a},
+			Arithmetic{Arithmetic::Kind::Sub, ValueType::i32},
+			Unreachable{},
+		End{},
+		LoadConst{opt},
+		LoadConst{to_mul},
+		Cmp{Cmp::Kind::Eq, ValueType::i32},
+		Scope{.kind = Scope::Kind::If,.info = BlockInfo{21,26,ValueType::i32},std::nullopt,std::nullopt},
+			LoadConst{b},	
+			LoadConst{a},
+			Arithmetic{Arithmetic::Kind::Mul, ValueType::i32},
+			Unreachable{},
 		End{}
-	};
+		};
+
 
 	vm.load(program);
 	vm.run();
