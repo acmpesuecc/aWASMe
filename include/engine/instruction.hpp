@@ -40,26 +40,33 @@ struct Arithmetic {
 	ValueType num_type;
 };
 
-struct Bitwise {
+enum IntType {
+	i32,
+	i64
+};
+
+struct UnaryBitwise {
+	enum Kind {
+		Not
+	};
+	Kind op_kind;
+	// Only integer types can perform these instruction
+	IntType num_type;
+};
+
+struct BinaryBitwise {
 	enum Kind {
 		And,
 		Or,
-		Not,
 		Xor,
 		Shl,
 		ShrU,
 		ShrS
 	};
 
-	/// The only valid value types that can perform this instruction
-	enum VType {
-		i32,
-		i64
-
-	};
-
 	Kind op_kind;
-	VType num_type;
+	// Only integer types can perform these instruction
+	IntType num_type;
 };
 
 struct Cmp {
@@ -123,7 +130,8 @@ using Instruction = std::variant<
 	LoadConst,
 	Arithmetic,
 	Cmp,	
-	Bitwise,
+	UnaryBitwise,
+	BinaryBitwise,
 	Scope,
 	End,
 	Return,

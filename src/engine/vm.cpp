@@ -109,8 +109,8 @@ struct CmpVisitor {
 	}
 };
 
-struct BitwiseVisitor {
-	Bitwise::Kind op_kind;
+struct BinaryBitwiseVisitor {
+	BinaryBitwise::Kind op_kind;
 
 
 	template<typename T, typename U>
@@ -131,12 +131,10 @@ struct BitwiseVisitor {
 		ValueType vt = to_value_type(a); 
 
 		switch(op_kind) {
-			case Bitwise::Kind::And: return a & b;
-			case Bitwise::Kind::Or:  return a | b;
-			case Bitwise::Kind::Not: throw std::runtime_error("Must be handled outside visitor"); // This errors because all the other variants take in two arguments and this takes in only one.
-													  // Could be made better.
-			case Bitwise::Kind::Xor: return a ^ b;
-			case Bitwise::Kind::Shl: 
+			case BinaryBitwise::Kind::And: return a & b;
+			case BinaryBitwise::Kind::Or:  return a | b;
+			case BinaryBitwise::Kind::Xor: return a ^ b;
+			case BinaryBitwise::Kind::Shl: 
 					     if(vt == ValueType::i32) {
 						     int32_t shift = a;
 						     int32_t value = b;
@@ -148,7 +146,7 @@ struct BitwiseVisitor {
 					     }
 					     throw std::runtime_error("unreachable");
 
-			case Bitwise::Kind::ShrU:
+			case BinaryBitwise::Kind::ShrU:
 					     if(vt == ValueType::i32) {
 						     int32_t shift = a;
 						     int32_t value = b;
@@ -159,7 +157,7 @@ struct BitwiseVisitor {
 						     // TODO
 					     }
 					     throw std::runtime_error("unreachable");
-			case Bitwise::Kind::ShrS:
+			case BinaryBitwise::Kind::ShrS:
 					     if(vt == ValueType::i32) {
 						     int32_t shift = a;
 						     int32_t value = b;
@@ -206,29 +204,36 @@ bool VM::run_instr(const Instruction& instr) {
 			return true;
 
 		},
-		[&](const Bitwise& instr) { 
-			ValueType type = instr.num_type == Bitwise::VType::i32 ? ValueType::i32 : ValueType::i64;	
+		[&](const BinaryBitwise& instr) { 
+			ValueType type = instr.num_type == IntType::i32 ? ValueType::i32 : ValueType::i64;	
 			
-			// handle this a little differently because all the other instruction kinds take in two arguments while this guy takes in only one 
-			if(instr.op_kind == Bitwise::Kind::Not) {
-				this->expect_stack({type});
-				Value v1 = this->pop().value();
-				if(std::holds_alternative<int32_t>(v1)) {
-					this->push(~std::get<int32_t>(v1));
-					return true;
-				}
-				this->push(~std::get<int32_t>(v1));
-				return true;
-			}
+			
 
 			this->expect_stack({type,type});
 
 			Value v1 = this->pop().value();
 			Value v2 = this->pop().value();
 
-			this->push(std::visit(BitwiseVisitor{instr.op_kind},v1,v2));
+			this->push(std::visit(BinaryBitwiseVisitor{instr.op_kind},v1,v2));
 			return true;
 
+		},
+		[&](const UnaryBitwise& instr) { 
+
+			ValueType type = instr.num_type == IntType::i32 ? ValueType::i32 : ValueType::i64;	
+			switch(instr.op_kind) {
+				case UnaryBitwise::Not: {
+								this->expect_stack({type});
+								Value v1 = this->pop().value();
+								if(std::holds_alternative<int32_t>(v1)) {
+									this->push(~std::get<int32_t>(v1));
+									return true;
+								}
+								this->push(~std::get<int32_t>(v1));
+								return true;
+							}
+			}
+			throw std::runtime_error("unreachable");
 		},
 		[&](const Scope& scope) { 
 			Block b= Block{.br_action = BrAction::JumpToEnd, .info = scope.info};

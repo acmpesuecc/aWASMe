@@ -64,29 +64,36 @@ std::string to_string(Instruction i) {
 			}
 			return out;
 		},
-		[](Bitwise& b) { 
-			std::string out = b.num_type == Bitwise::VType::i32 ? "i32.": "i64.";
+		[](BinaryBitwise& b) { 
+			std::string out = b.num_type == IntType::i32 ? "i32.": "i64.";
 			switch(b.op_kind) {
-				case Bitwise::Kind::And:
+				case BinaryBitwise::Kind::And:
 					out += "and";
 					break;
-				case Bitwise::Kind::Or:
+				case BinaryBitwise::Kind::Or:
 					out += "or";
 					break;
-				case Bitwise::Kind::Not:
-					out += "not";
-					break;
-				case Bitwise::Kind::Xor:
+				case BinaryBitwise::Kind::Xor:
 					out += "xor";
 					break;
-				case Bitwise::Kind::Shl:
+				case BinaryBitwise::Kind::Shl:
 					out += "shl";
 					break;
-				case Bitwise::Kind::ShrU:
+				case BinaryBitwise::Kind::ShrU:
 					out += "shru";
 					break;
-				case Bitwise::Kind::ShrS:
+				case BinaryBitwise::Kind::ShrS:
 					out += "shrs";
+					break;
+			}
+			return out;
+
+		},
+		[](UnaryBitwise& b) { 
+			std::string out = b.num_type == IntType::i32 ? "i32.": "i64.";
+			switch(b.op_kind) {
+				case UnaryBitwise::Kind::Not:
+					out += "not";
 					break;
 			}
 			return out;
