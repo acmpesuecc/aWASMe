@@ -212,13 +212,25 @@ bool VM::run_instr(const Instruction& instr) {
 					    if(this->control_frames.size() <=  bk) 
 						    throw StackUnderflowError();
 
-					    size_t loc;	
 					    std::optional<Value> return_value = {};
-					    for(int i = 0;i<=bk;i++) {
+
+					    ControlFrame req_cf = this->control_frames.at(this->control_frames.size()-bk-1);
+					    if(!req_cf.is_block()) throw UnexpectedInstruction(instr,this->ip);
+
+					    Block required_block = req_cf.get_block().value();
+					    size_t loc = req_cf.get_branch_target().value();	
+					    // If we're jumping out of a loop, then we do not want to break out of the loop, just rerun it
+					    if(required_block.br_action == BrAction::JumpToStart) {
+						    this->ip = loc;
+						    return true;
+					    }
+						
+						for(int i = 0;i<=bk;i++) {
 						    ControlFrame cf = this->control_frames.back();
 						    if(!cf.is_block()) throw UnexpectedInstruction(instr,this->ip);
 
 						    Block blk = cf.get_block().value();
+							
 						    std::optional<ValueType> expected_return_type = blk.info.return_type;
 						    size_t items_to_pop = this->stack.size() - cf.initial_sp;
 
@@ -231,7 +243,6 @@ bool VM::run_instr(const Instruction& instr) {
 
 						    for(size_t j =0;j<items_to_pop;j++) this->pop();
 
-						    loc = cf.get_branch_target().value();
 						    this->control_frames.pop_back();
 					    }
 					    this->ip = loc;
