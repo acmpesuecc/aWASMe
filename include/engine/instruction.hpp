@@ -99,6 +99,18 @@ struct Call {
 
 struct Br { size_t index; };
 
+
+struct Local {
+	enum Kind {
+		Get,
+		Set,
+		Tee
+	};
+
+	Kind kind;
+	size_t index;
+};
+
 template<class... Ts>
 struct overloads : Ts... { using Ts::operator()...; };
 
@@ -116,7 +128,8 @@ using Instruction = std::variant<
 	End,
 	Return,
 	Br,
-	Call
+	Call,
+	Local
 >;
 
 std::string to_string(Instruction i);

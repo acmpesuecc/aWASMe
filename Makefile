@@ -4,7 +4,7 @@ INCLUDE_DIR := include
 SRC_DIR := src
 
 CXX := g++
-CXXFLAGS := -Wall -Wextra -MMD -MP -Iinclude/engine
+CXXFLAGS := -Wall -Wextra -MMD -MP -Iinclude/engine 
 
 ENGINE_SRC := $(SRC_DIR)/engine
 ENGINE_HEADERS := $(INCLUDE_DIR)/engine
@@ -17,6 +17,9 @@ ENGINE_D_FILES := $(ENGINE_OBJ_FILES:.o=.d)
 TARGET := main
 
 all: $(TARGET)
+
+run: all
+	./$(TARGET)
 
 $(TARGET): $(ENGINE_OBJ_FILES)
 	$(CXX) $(CXXFLAGS) -o $@ $(ENGINE_OBJ_FILES) 	

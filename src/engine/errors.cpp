@@ -61,6 +61,31 @@ const char* InvalidInstructionPointer::what() const noexcept {
 	return this->message.c_str();
 }
 
+std::string to_string(InvalidIndex::IndexFor f) {
+	switch(f) {
+		case InvalidIndex::IndexFor::Local: return "locals";
+	}
+}
+
+InvalidIndex::InvalidIndex(size_t index) {
+	this->message = "Invalid index " + std::to_string(index);
+}
+InvalidIndex::InvalidIndex(InvalidIndex::IndexFor ifor,size_t index) {
+	this->message =  "Invalid index " + std::to_string(index) + " into " + to_string(ifor);
+}
+InvalidIndex::InvalidIndex(IndexFor ifor,size_t index,size_t max) {
+	this->message =  "Invalid index " + std::to_string(index) + " into " + to_string(ifor) + " when maximum index can be " + std::to_string(max);
+}
+InvalidIndex::InvalidIndex(IndexFor ifor,size_t index,size_t min, size_t max) {
+	this->message =  "Invalid index " + std::to_string(index) + " into " + to_string(ifor) + " when maximum index can be between " + std::to_string(min) + " and " + std::to_string(max);
+}
+
+const char* InvalidIndex::what() const noexcept {
+	return this->message.c_str();
+}
+
+
+
 
 VMError::VMError(std::exception_ptr e): message(""), inner(e) {
 

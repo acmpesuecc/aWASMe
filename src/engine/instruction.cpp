@@ -109,8 +109,24 @@ std::string to_string(Instruction i) {
 		},
 		[](End&) { return std::string("end"); },
 		[](Return&) { return std::string("return"); },
-		[](Br& b) { return "br" + std::to_string(b.index); },
-		[](Call& c) { return "call" + std::to_string(c.index); }
+		[](Br& b) { return "br " + std::to_string(b.index); },
+		[](Call& c) { return "call " + std::to_string(c.index); },
+		[](Local& l) { 
+			std::string out = "local.";
+			switch(l.kind) {
+				case Local::Kind::Get:
+					out += "get";
+					break;
+				case Local::Kind::Set:
+					out += "set";
+					break;
+				case Local::Kind::Tee:
+					out += "tee";
+					break;
+			}
+			out += " " + std::to_string(l.index);
+			return out;
+		}
 	};
 
 	return std::visit(visitor,i);
