@@ -63,14 +63,14 @@ void parse_type_section(std::span<const uint8_t> data, Module& module)
 		std::cout<<"Parameter count"<<pramCount<<std::endl;
 		for(uint32_t i=0;i<pramCount;i++)
 		{
-			Type pType =Hex_to_type(data[offset++]);
+			Type pType =static_cast<Type>(data[offset++]); 
 			std::cout<<"PARAMETER TYPE OF "<<i<<(pType== Type::I32? " i32":" Other")<<std::endl;
 		}
 		uint32_t returnCount =leb128_decode(data,secSize,offset);
 		std::cout<<"Return count"<<returnCount<<std::endl;
 		for(uint32_t i=0;i<returnCount;i++)
 		{
-			Type rType =Hex_to_type(data[offset++]);
+			Type rType =static_cast<Type>(data[offset++]); 
 			std::cout<<"RETURN TYPE OF "<<i<<(rType== Type::I32? " i32":" Other")<<std::endl;
 		}
 	}
@@ -106,11 +106,11 @@ void parse_global_section(std::span<const uint8_t>data,Module& module)
 	std::cout<<"Number of globals are: "<<globalCount<<std::endl;
 	for(uint32_t i=0;i<globalCount;i++)
 	{
-		Type gType =Hex_to_type(data[offset++]);
+		Type gType =static_cast<Type>(data[offset++]); 
 		std::cout<<"Type is: "<<(gType== Type::I32? " i32\n":" Other\n");
 		bool mut =data[offset++];
 		std::cout<<"mut: "<<mut<<std::endl;
-		Type type=Hex_to_type(data[offset++]); //Use InstrKind for this 
+		Type type =static_cast<Type>(data[offset++]); 
 		std::cout<<"opcode is : "<<(type == Type::I32_const? " i32.const\n":" Other\n");
 		size_t value = leb128_decode(data , secSize,offset); 
 		std::cout<<"Value is : "<<value<<std::endl;
@@ -206,7 +206,7 @@ void parse_import_section(std::span<const uint8_t>data, Module& module)
 			case 0x03:
 			{
 				std::cout<<"Gloabal"<<std::endl;
-				Type gType =Hex_to_type(data[offset++]);
+				Type gType =static_cast<Type>(data[offset++]);
 				std::cout<<"Type is: "<<(gType== Type::I32? " i32\n":" Other\n");
 				bool mut =data[offset++];
 				std::cout<<"mut: "<<mut<<std::endl;
@@ -233,8 +233,7 @@ void parse_element_section(std::span<const uint8_t>data,Module& module)
 			case Flag::ActiveImplicit:
 			case Flag::ActiveImplicitExpr:
 			{
-				uint8_t offsetO=data[offset++];
-				Type opcode = Hex_to_type(offsetO);
+				Type opcode =static_cast<Type>(data[offset++]);
 				std::cout<<"OPCODE"<<(opcode==Type::I32_const?" i32.const\n": " Other\n");
 				size_t offsetVal=leb128_decode(data,secSize,offset);
 				offset++;//skipping END Byte
@@ -252,8 +251,7 @@ void parse_element_section(std::span<const uint8_t>data,Module& module)
 			case Flag::ActiveExplicitExpr:
 			{
 				size_t tableIND=leb128_decode(data,secSize,offset);
-				uint8_t offsetO=data[offset++];
-				Type opcode = Hex_to_type(offsetO);
+				Type opcode =static_cast<Type>(data[offset++]);
 				std::cout<<"OPCODE"<<(opcode==Type::I32_const?"i32.const\n": "Other\n");
 				offset++;//skipping END Byte
 				uint8_t eleKind = data[offset++];//always 0x00
@@ -299,8 +297,7 @@ void parse_data_section(std::span<const uint8_t>data,Module& module)
 		{
 			if(flag==Flag::ActiveExplicit)
 			size_t memIND=leb128_decode(data,secSize,offset);
-			uint8_t offsetO=data[offset++];
-			Type opcode = Hex_to_type(offsetO);
+			Type opcode =static_cast<Type>(data[offset++]);
 			std::cout<<"OPCODE"<<(opcode==Type::I32_const?" i32.const\n": " Other\n");
 			size_t offsetVal=leb128_decode(data,secSize,offset);
 			offset++;//skipping END Byte
@@ -352,33 +349,6 @@ std::vector<uint8_t> Loadfile(std::string Path)
 	return data; //otherwise return data
 }
 
-Type Hex_to_type(uint8_t byte)
-{
-	switch (byte)
-    {
-    case 0x7F:
-        return Type::I32;
-    case 0x7E:
-        return Type::I64;
-    case 0x7D:
-        return Type::F32;
-    case 0x7C:
-        return Type::F64;
-	case 0x41:
-		return Type::I32_const;
-	case 0x42:
-		return Type::I64_const;
-	case 0x43:
-		return Type::F32_const;
-	case 0x44:
-		return Type::F64_const;
-	case 0x23:
-		return Type::Global_get;
-    default:
-        std::cout<<"Invalid Type"<<std::endl;
-		return Type::NONE;
-    }
-}
 void parse_function(std::span<const uint8_t>data,size_t eleCount,size_t &offset,size_t secSize,Module& module)
 {
 	for(size_t i=0;i<eleCount;i++)
@@ -420,7 +390,7 @@ void parse_expression(std::span<const uint8_t>data,size_t eleCount,size_t &offse
 }
 std::string read_string(std::span<const uint8_t>data,size_t &offset)
 {
-	size_t secSize = data.size();
+	size_t secSize=data.size();
 	size_t len =leb128_decode(data,secSize,offset);
 	std::cout<<"Length: "<<len<<std::endl;
 	std::string bytes ="";

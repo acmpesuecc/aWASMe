@@ -25,16 +25,16 @@ void parse_expression(std::span<const uint8_t>data,size_t eleCount,size_t &offse
 std::string read_string(std::span<const uint8_t>data,size_t &offset);
 //Data table - mapping binary instructions to their opcodes
 //mapping for TYPE SECTION 
-enum class Type{
-    I32,
-    I64,
-    F32,
-    F64,
-    I32_const,
-    I64_const,
-    F32_const,
-    F64_const,
-    Global_get,
+enum class Type {
+    I32       =0x7F,
+    I64       =0x7E,
+    F32       =0x7D,
+    F64       =0x7C,
+    I32_const =0x41,
+    I64_const =0x42,
+    F32_const =0x43,
+    F64_const =0x44,
+    Global_get =0x23,
     NONE
 };
 enum class Flag : uint8_t
@@ -56,4 +56,3 @@ enum class Tag : uint8_t
        Global=0x03, 
 };
 
-Type Hex_to_type(uint8_t byte);
