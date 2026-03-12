@@ -38,6 +38,37 @@ class UnexpectedInstruction: public std::exception {
 		const char* what() const noexcept; 
 };
 
+
+class InvalidInstructionPointer: public std::exception {
+	private:
+		std::string message;
+	public:
+		InvalidInstructionPointer(std::string& msg): message(msg) {};
+		InvalidInstructionPointer(size_t index): message(std::string("Invalid instruction pointer") + std::to_string(index)) {};
+		InvalidInstructionPointer(size_t index,size_t max_ip): message(std::string("Invalid instruction pointer ") + std::to_string(index) + " when maximum value can be " + std::to_string(max_ip)) {};
+		const char* what() const noexcept; 
+};
+
+class InvalidIndex: public std::exception {
+
+
+	private:
+		std::string message;
+			
+	public:
+		/// Where did we try to index into
+		enum IndexFor {
+			Local,
+		};
+
+		InvalidIndex(std::string& msg): message(msg) {};
+		InvalidIndex(size_t index);
+		InvalidIndex(IndexFor ifor,size_t index);
+		InvalidIndex(IndexFor ifor,size_t index,size_t max);
+		InvalidIndex(IndexFor ifor,size_t index,size_t min, size_t max);
+		const char* what() const noexcept; 
+};
+
 class VMError: public std::exception {
 	private:
 		std::string message;

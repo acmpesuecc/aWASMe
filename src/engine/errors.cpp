@@ -22,7 +22,7 @@ ExpectStackError::ExpectStackError(std::vector<ValueType> expected, std::vector<
 ExpectStackError::ExpectStackError(std::vector<ValueType> expected, std::vector<Value> got) {
 	std::string out = "Expected [";
 
-	int i =0;
+	size_t i =0;
 	for(auto it = expected.begin(); it != expected.end(); it++) {
 		out += to_string(*it);
 		if(i+1 != expected.size()) out += ",";
@@ -45,7 +45,7 @@ const char* ExpectStackError::what() const noexcept {
 }
 
 UnexpectedInstruction::UnexpectedInstruction(Instruction i,size_t ip) {
-	 this->message = "Unexpected instruction " + i.to_string() + " at index " + std::to_string(ip);
+	 this->message = "Unexpected instruction " + to_string(i) + " at index " + std::to_string(ip);
 	
 }
 
@@ -56,6 +56,35 @@ const char * UnexpectedInstruction::what() const noexcept {
 const char * StackUnderflowError::what() const noexcept {
 	return this->message.c_str();
 }
+
+const char* InvalidInstructionPointer::what() const noexcept {
+	return this->message.c_str();
+}
+
+std::string to_string(InvalidIndex::IndexFor f) {
+	switch(f) {
+		case InvalidIndex::IndexFor::Local: return "locals";
+	}
+}
+
+InvalidIndex::InvalidIndex(size_t index) {
+	this->message = "Invalid index " + std::to_string(index);
+}
+InvalidIndex::InvalidIndex(InvalidIndex::IndexFor ifor,size_t index) {
+	this->message =  "Invalid index " + std::to_string(index) + " into " + to_string(ifor);
+}
+InvalidIndex::InvalidIndex(IndexFor ifor,size_t index,size_t max) {
+	this->message =  "Invalid index " + std::to_string(index) + " into " + to_string(ifor) + " when maximum index can be " + std::to_string(max);
+}
+InvalidIndex::InvalidIndex(IndexFor ifor,size_t index,size_t min, size_t max) {
+	this->message =  "Invalid index " + std::to_string(index) + " into " + to_string(ifor) + " when maximum index can be between " + std::to_string(min) + " and " + std::to_string(max);
+}
+
+const char* InvalidIndex::what() const noexcept {
+	return this->message.c_str();
+}
+
+
 
 
 VMError::VMError(std::exception_ptr e): message(""), inner(e) {

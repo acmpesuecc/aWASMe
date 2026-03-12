@@ -23,11 +23,15 @@ class ControlFrame {
 		/// Returns an optional index to which the ip will be set, if a br, or a return or end in the case of functions is run.
 		std::optional<size_t> get_branch_target(); 
 
+		/// Returns an index into the `end` instruction of the ControlFrame
+		size_t get_end();
+
 		bool is_block();
 		bool is_activation_record();
 
 		std::optional<Block> get_block();
 		std::optional<ActivationRecord> get_activation_record();
+		std::optional<ActivationRecord*> get_activation_record_ptr();
 		std::optional<ValueType> get_return_type();
 };
 
@@ -73,5 +77,8 @@ class VM {
 
 		/// Given a vector of value types, validates the stack from the BACK and returns. Unlike expect_stack, this function needs the stack to be exactly equal to expected_values.
 		void expect_stack_exact(std::vector<ValueType> expected_values);
+
+		/// Sets the ip to the given ip after performing bounds checking. If given index >= current number of instructions then InvalidInstructionPointer exception is thrown
+		void set_ip(size_t index);
 };
 #endif

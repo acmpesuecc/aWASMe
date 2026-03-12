@@ -16,8 +16,8 @@ enum class ValueType {
 };
 
 ValueType to_value_type(Value);
+Value zero_from_value_type(ValueType);
 
 std::string to_string(ValueType v);
 std::string to_string(Value v);
-
 #endif
