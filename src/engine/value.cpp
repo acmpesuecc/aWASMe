@@ -6,7 +6,16 @@ ValueType to_value_type(Value v) {
 	if(std::holds_alternative<float>(v))  return ValueType::f32;
 	if(std::holds_alternative<double>(v))  return ValueType::f64;
 	__builtin_unreachable();
+}
 
+Value zero_from_value_type(ValueType v) {
+	switch(v) {
+		case ValueType::i32: return (int32_t)0;
+		case ValueType::i64: return (int64_t)0;
+		case ValueType::f32: return (float)0.0;
+		case ValueType::f64: return (double)0.0;
+	}
+	__builtin_unreachable();
 }
 
 std::string to_string(ValueType v) {
@@ -26,4 +35,3 @@ std::string to_string(Value v) {
 	if(std::holds_alternative<double>(v))  return std::to_string(std::get<double>(v));
 	__builtin_unreachable();
 }
-
