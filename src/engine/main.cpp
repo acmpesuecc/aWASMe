@@ -37,7 +37,7 @@ int main() {
 		Scope{.kind = Scope::Kind::If,.info = BlockInfo{3,8,ValueType::f32},std::nullopt,std::nullopt},
 			LoadConst{b},	
 			LoadConst{a},
-			Arithmetic{Arithmetic::Kind::Add, ValueType::f32},
+			FloatArithmetic{FloatArithmetic::Kind::Add, FloatType::f32},
 			Unreachable{},
 		End{},
 		LoadConst{opt},
@@ -46,7 +46,7 @@ int main() {
 		Scope{.kind = Scope::Kind::If,.info = BlockInfo{12,17,ValueType::f32},std::nullopt,std::nullopt},
 			LoadConst{b},	
 			LoadConst{a},
-			Arithmetic{Arithmetic::Kind::Sub, ValueType::f32},
+			FloatArithmetic{FloatArithmetic::Kind::Sub, FloatType::f32},
 			Unreachable{},
 		End{},
 		LoadConst{opt},
@@ -55,7 +55,7 @@ int main() {
 		Scope{.kind = Scope::Kind::If,.info = BlockInfo{21,26,ValueType::f32},std::nullopt,std::nullopt},
 			LoadConst{b},	
 			LoadConst{a},
-			Arithmetic{Arithmetic::Kind::Mul, ValueType::f32},
+			FloatArithmetic{FloatArithmetic::Kind::Mul, FloatType::f32},
 			Unreachable{},
 		End{}
 		};

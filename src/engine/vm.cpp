@@ -74,21 +74,46 @@ void VM::load(const std::vector<Instruction>& instrs) {
 	ip = 0;
 }
 
-struct ArithemticVisitor {
-	Arithmetic::Kind op_kind;
+struct FloatArithemticVisitor {
+	FloatArithmetic::Kind op_kind;
 
 	template <typename T, typename U>
 	Value operator()(const T& a, const U& b) {
-		if constexpr (!std::is_same_v<T,U>) {
+		if constexpr (!std::is_same_v<T,U> || !(std::is_same_v<T,float> || std::is_same_v<T,double>)) {
 			throw std::runtime_error("Type mismatch");
-		}
+		}else {
 		switch(op_kind) {
-			case Arithmetic::Kind::Add: return a + b;
-			case Arithmetic::Kind::Sub: return a - b;
-			case Arithmetic::Kind::Mul: return a * b;
+			case FloatArithmetic::Kind::Add: return a + b;
+			case FloatArithmetic::Kind::Sub: return a - b;
+			case FloatArithmetic::Kind::Mul: return a * b;
 		}
 		throw std::runtime_error("unreachable");
+		}
 	}
+};
+
+struct IntArithemticVisitor {
+	IntArithmetic::Kind op_kind;
+
+	template <typename T, typename U>
+		Value operator()(const T& a, const U& b) {
+			if constexpr (!std::is_same_v<T,U> || !(std::is_same_v<T,int32_t> || std::is_same_v<T,int64_t>)) {
+				throw std::runtime_error("Type mismatch");
+			}else{
+				using utype = std::make_unsigned_t<T>;
+				switch(op_kind) {
+					case IntArithmetic::Kind::Add: return a + b;
+					case IntArithmetic::Kind::Sub: return a - b;
+					case IntArithmetic::Kind::Mul: return a * b;
+
+					case IntArithmetic::Kind::DivS: return a / b;
+					case IntArithmetic::Kind::DivU: return (T)((utype)a / (utype)b);
+					case IntArithmetic::Kind::RemS:  return a % b;
+					case IntArithmetic::Kind::RemU:  return (T)((utype)a % (utype)b);
+				}
+				throw std::runtime_error("unreachable");
+			}
+		}
 };
 
 struct IntCmpVisitor {
@@ -216,14 +241,24 @@ bool VM::run_instr(const Instruction& instr) {
 			this->push(i.value);
 			return true;
 		},
-		[&](const Arithmetic& a_instr) { 
-			ValueType type = a_instr.num_type;	
+		[&](const IntArithmetic& a_instr) { 
+			ValueType type = a_instr.num_type == IntType::i32 ? ValueType::i32 : ValueType::i64;	
 			this->expect_stack({type,type});
 
 			Value v1 = this->pop().value();
 			Value v2 = this->pop().value();
 
-			this->push(std::visit(ArithemticVisitor{a_instr.op_kind},v1,v2));
+			this->push(std::visit(IntArithemticVisitor{a_instr.op_kind},v1,v2));
+			return true;
+		},
+		[&](const FloatArithmetic& a_instr) { 
+			ValueType type = a_instr.num_type == FloatType::f32 ? ValueType::f32 : ValueType::f64;	
+			this->expect_stack({type,type});
+
+			Value v1 = this->pop().value();
+			Value v2 = this->pop().value();
+
+			this->push(std::visit(FloatArithemticVisitor{a_instr.op_kind},v1,v2));
 			return true;
 		},
 		[&](const IntCmp& instr) { 

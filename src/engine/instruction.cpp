@@ -25,16 +25,44 @@ std::string to_string(Instruction i) {
 			return out;
 
 		},
-		[](Arithmetic& a) { 
-			std::string out = to_string(a.num_type) + ".";
+		[](IntArithmetic& a) { 
+			std::string out = a.num_type == IntType::i32 ? "i32.": "i64.";
 			switch(a.op_kind) {
-				case Arithmetic::Kind::Add:
+				case IntArithmetic::Kind::Add:
 					out += "add";
 					break;
-				case Arithmetic::Kind::Sub:
+				case IntArithmetic::Kind::Sub:
 					out += "sub";
 					break;
-				case Arithmetic::Kind::Mul:
+				case IntArithmetic::Kind::Mul:
+					out += "mul";
+					break;
+				case IntArithmetic::Kind::DivS:
+					out += "div_s";
+					break;
+				case IntArithmetic::Kind::RemS:
+					out += "rem_s";
+					break;
+				case IntArithmetic::Kind::DivU:
+					out += "div_u";
+					break;
+				case IntArithmetic::Kind::RemU:
+					out += "rem_u";
+					break;
+			}
+
+			return out;
+		},
+		[](FloatArithmetic& a) { 
+			std::string out = a.num_type == FloatType::f32 ? "f32.": "f64.";
+			switch(a.op_kind) {
+				case FloatArithmetic::Kind::Add:
+					out += "add";
+					break;
+				case FloatArithmetic::Kind::Sub:
+					out += "sub";
+					break;
+				case FloatArithmetic::Kind::Mul:
 					out += "mul";
 					break;
 			}

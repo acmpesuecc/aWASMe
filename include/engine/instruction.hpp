@@ -29,17 +29,6 @@ struct LoadConst {
 	Value value;
 };
 
-struct Arithmetic {
-	enum class Kind {
-		Add,
-		Sub,
-		Mul,
-	};
-
-	Kind op_kind;
-	ValueType num_type;
-};
-
 enum FloatType {
 	f32,
 	f64
@@ -49,6 +38,34 @@ enum IntType {
 	i32,
 	i64
 };
+
+struct IntArithmetic {
+	enum class Kind {
+		Add,
+		Sub,
+		Mul,
+		DivS,
+		DivU,
+		RemS,
+		RemU
+	};
+
+	Kind op_kind;
+	IntType num_type;
+};
+
+struct FloatArithmetic {
+	enum class Kind {
+		Add,
+		Sub,
+		Mul,
+	};
+
+	Kind op_kind;
+	FloatType num_type;
+};
+
+
 
 struct UnaryBitwise {
 	enum Kind {
@@ -130,7 +147,6 @@ struct Call {
 
 struct Br { size_t index; };
 
-
 struct Local {
 	enum Kind {
 		Get,
@@ -152,7 +168,8 @@ using Instruction = std::variant<
 	Nop,
 	Unreachable,
 	LoadConst,
-	Arithmetic,
+	IntArithmetic,
+	FloatArithmetic,
 	IntCmp,	
 	FloatCmp,	
 	UnaryBitwise,
