@@ -40,6 +40,11 @@ struct Arithmetic {
 	ValueType num_type;
 };
 
+enum FloatType {
+	f32,
+	f64
+};
+
 enum IntType {
 	i32,
 	i64
@@ -69,18 +74,37 @@ struct BinaryBitwise {
 	IntType num_type;
 };
 
-struct Cmp {
+struct IntCmp {
+	enum class Kind {
+		Eq,
+		Ne,
+
+		LtU,
+		GtU,
+		LeU,
+		GeU,
+
+		LtS,
+		GtS,
+		LeS,
+		GeS,
+	};
+	Kind op_kind;
+	IntType num_type;
+};
+
+struct FloatCmp {
 	enum class Kind {
 		Eq,
 		Ne,
 		Lt,
 		Gt,
 		Le,
-		Ge
+		Ge,
 	};
 
 	Kind op_kind;
-	ValueType num_type;
+	FloatType num_type;
 };
 
 struct Scope {
@@ -129,7 +153,8 @@ using Instruction = std::variant<
 	Unreachable,
 	LoadConst,
 	Arithmetic,
-	Cmp,	
+	IntCmp,	
+	FloatCmp,	
 	UnaryBitwise,
 	BinaryBitwise,
 	Scope,

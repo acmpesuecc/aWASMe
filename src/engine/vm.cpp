@@ -1,5 +1,7 @@
-#include"vm.hpp"
 #include<stdexcept>
+#include<iostream>
+#include<type_traits>
+#include"vm.hpp"
 #include"errors.hpp"
 
 bool ControlFrame::is_block() {
@@ -89,21 +91,54 @@ struct ArithemticVisitor {
 	}
 };
 
-struct CmpVisitor {
-	Cmp::Kind op_kind;
+struct IntCmpVisitor {
+	IntCmp::Kind op_kind;
+
+	template <typename T, typename U>
+	Value operator()(const T& a, const U& b) {
+		if constexpr (!std::is_same_v<T,U> || !(std::is_same_v<T,int32_t> || std::is_same_v<T,int64_t>)) {
+			throw std::runtime_error("Type mismatch");
+		}else {
+
+			using utype = std::make_unsigned_t<T>;
+
+			switch(op_kind) {
+				case IntCmp::Kind::Eq: return a == b;
+				case IntCmp::Kind::Ne: return a != b;
+
+				case IntCmp::Kind::LtU: return (utype)a <  (utype)b;
+				case IntCmp::Kind::GtU: return (utype)a >  (utype)b;
+				case IntCmp::Kind::LeU: return (utype)a <= (utype)b;
+				case IntCmp::Kind::GeU: return (utype)a >= (utype)b;
+
+				case IntCmp::Kind::LtS: return a < b;
+				case IntCmp::Kind::GtS: return a > b;
+				case IntCmp::Kind::LeS: return a <= b;
+				case IntCmp::Kind::GeS: return a >= b;
+
+			}
+			throw std::runtime_error("unreachable");
+		}
+	}
+};
+
+struct FloatCmpVisitor {
+	FloatCmp::Kind op_kind;
 
 	template <typename T, typename U>
 	Value operator()(const T& a, const U& b) {
 		if constexpr (!std::is_same_v<T,U>) {
 			throw std::runtime_error("Type mismatch");
 		}
+			
 		switch(op_kind) {
-			case Cmp::Kind::Eq: return a == b;
-			case Cmp::Kind::Ne: return a != b;
-			case Cmp::Kind::Lt: return a < b;
-			case Cmp::Kind::Gt: return a > b;
-			case Cmp::Kind::Le: return a <= b;
-			case Cmp::Kind::Ge: return a >= b;
+			case FloatCmp::Kind::Eq: return a == b;
+			case FloatCmp::Kind::Ne: return a != b;
+			case FloatCmp::Kind::Lt: return a < b;
+			case FloatCmp::Kind::Gt: return a > b;
+			case FloatCmp::Kind::Le: return a <= b;
+			case FloatCmp::Kind::Ge: return a >= b;
+
 		}
 		throw std::runtime_error("unreachable");
 	}
@@ -191,24 +226,34 @@ bool VM::run_instr(const Instruction& instr) {
 			this->push(std::visit(ArithemticVisitor{a_instr.op_kind},v1,v2));
 			return true;
 		},
-		[&](const Cmp& instr) { 
-			ValueType type = instr.num_type;	
+		[&](const IntCmp& instr) { 
+			ValueType type = instr.num_type == IntType::i32 ? ValueType::i32 : ValueType::i64;	
 			this->expect_stack({type,type});
 
 			Value v1 = this->pop().value();
 			Value v2 = this->pop().value();
 
-			Value res = std::visit(CmpVisitor{instr.op_kind},v1,v2);
+			Value res = std::visit(IntCmpVisitor{instr.op_kind},v1,v2);
 
 			this->push(res);
 			return true;
+		},
 
+		[&](const FloatCmp& instr) { 
+			ValueType type = instr.num_type == FloatType::f32 ? ValueType::f32 : ValueType::f64;	
+			this->expect_stack({type,type});
+
+			Value v1 = this->pop().value();
+			Value v2 = this->pop().value();
+
+			Value res = std::visit(FloatCmpVisitor{instr.op_kind},v1,v2);
+
+			this->push(res);
+			return true;
 		},
 		[&](const BinaryBitwise& instr) { 
 			ValueType type = instr.num_type == IntType::i32 ? ValueType::i32 : ValueType::i64;	
 			
-			
-
 			this->expect_stack({type,type});
 
 			Value v1 = this->pop().value();

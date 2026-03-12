@@ -40,26 +40,62 @@ std::string to_string(Instruction i) {
 			}
 			return out;
 		},
-		[](Cmp& c) {
-			std::string out = to_string(c.num_type) + ".";
+		[](FloatCmp& c) {
+			std::string out = c.num_type == FloatType::f32 ? "f32.": "f64.";
 			switch(c.op_kind) {
-				case Cmp::Kind::Eq:
+				case FloatCmp::Kind::Eq:
 					out += "eq";
 					break;
-				case Cmp::Kind::Ne:
+				case FloatCmp::Kind::Ne:
 					out += "ne";
 					break;
-				case Cmp::Kind::Lt:
+				case FloatCmp::Kind::Lt:
 					out += "lt";
 					break;
-				case Cmp::Kind::Gt:
+				case FloatCmp::Kind::Gt:
 					out += "gt";
 					break;
-				case Cmp::Kind::Le:
+				case FloatCmp::Kind::Le:
 					out += "le";
 					break;
-				case Cmp::Kind::Ge:
+				case FloatCmp::Kind::Ge:
 					out += "ge";
+					break;
+			}
+			return out;
+		},
+		[](IntCmp& c) {
+			std::string out = c.num_type == IntType::i32 ? "i32.": "i64.";
+			switch(c.op_kind) {
+				case IntCmp::Kind::Eq:
+					out += "eq";
+					break;
+				case IntCmp::Kind::Ne:
+					out += "ne";
+					break;
+				case IntCmp::Kind::LtU:
+					out += "lt_u";
+					break;
+				case IntCmp::Kind::GtU:
+					out += "gt_u";
+					break;
+				case IntCmp::Kind::LeU:
+					out += "le_u";
+					break;
+				case IntCmp::Kind::GeU:
+					out += "ge_u";
+					break;
+				case IntCmp::Kind::LtS:
+					out += "lt_s";
+					break;
+				case IntCmp::Kind::GtS:
+					out += "gt_s";
+					break;
+				case IntCmp::Kind::LeS:
+					out += "le_s";
+					break;
+				case IntCmp::Kind::GeS:
+					out += "ge_s";
 					break;
 			}
 			return out;
