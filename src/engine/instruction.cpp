@@ -128,6 +128,64 @@ std::string to_string(Instruction i) {
 			}
 			return out;
 		},
+		[](UnaryInt& a) { 
+			std::string out = a.num_type == IntType::i32 ? "i32.": "i64.";
+			switch(a.op_kind) {
+				case UnaryInt::Kind::Clz:
+					out += "clz";
+					break;
+				case UnaryInt::Kind::Ctz:
+					out += "ctz";
+					break;
+				case UnaryInt::Kind::Popcnt:
+					out += "popcnt";
+					break;
+			}
+
+			return out;
+		},
+		[](UnaryFloat& u) { 
+			std::string out = u.num_type == FloatType::f32 ? "f32.": "f64.";
+			switch(u.op_kind) {
+				case UnaryFloat::Kind::Abs:
+					out += "abs";
+					break;
+				case UnaryFloat::Kind::Neg:
+					out += "neg";
+					break;
+				case UnaryFloat::Kind::Ciel:
+					out += "ciel";
+					break;
+				case UnaryFloat::Kind::Floor:
+					out += "floor";
+					break;
+				case UnaryFloat::Kind::Trunc:
+					out += "trunc";
+					break;
+				case UnaryFloat::Kind::Nearest:
+					out += "nearest";
+					break;
+				case UnaryFloat::Kind::Sqrt:
+					out += "sqrt";
+					break;
+			}
+			return out;
+		},
+		[](BinaryFloat& b) { 
+			std::string out = b.num_type == FloatType::f32 ? "f32.": "f64.";
+			switch(b.op_kind) {
+				case BinaryFloat::Kind::Min:
+					out += "min";
+					break;
+				case BinaryFloat::Kind::Max:
+					out += "max";
+					break;
+				case BinaryFloat::Kind::CopySign:
+					out += "copysign";
+					break;
+			}
+			return out;
+		},
 		[](BinaryBitwise& b) { 
 			std::string out = b.num_type == IntType::i32 ? "i32.": "i64.";
 			switch(b.op_kind) {

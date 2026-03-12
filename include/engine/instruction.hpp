@@ -66,6 +66,43 @@ struct FloatArithmetic {
 };
 
 
+struct UnaryInt {
+	enum class Kind {
+		Clz,
+		Ctz,
+		Popcnt
+	};
+
+	Kind op_kind;
+	IntType num_type;
+};
+
+struct UnaryFloat {
+	enum class Kind {
+		Abs,
+		Neg,
+		Ciel,
+		Floor,
+		Trunc,
+		Nearest,
+		Sqrt
+	};
+
+	Kind op_kind;
+	FloatType num_type;
+};
+
+struct BinaryFloat {
+	enum class Kind {
+		Min,
+		Max,
+		CopySign
+			
+	};
+
+	Kind op_kind;
+	FloatType num_type;
+};
 
 struct UnaryBitwise {
 	enum Kind {
@@ -172,6 +209,9 @@ using Instruction = std::variant<
 	FloatArithmetic,
 	IntCmp,	
 	FloatCmp,	
+	UnaryInt,
+	UnaryFloat,
+	BinaryFloat,
 	UnaryBitwise,
 	BinaryBitwise,
 	Scope,

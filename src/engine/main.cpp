@@ -31,10 +31,11 @@ int main() {
 
 
 	std::vector<Instruction> program = { 
+		Unreachable{},
 		LoadConst{opt},
 		LoadConst{to_add},
 		IntCmp{IntCmp::Kind::Eq, IntType::i32},
-		Scope{.kind = Scope::Kind::If,.info = BlockInfo{3,8,ValueType::f32},std::nullopt,std::nullopt},
+		Scope{Scope::Kind::If,BlockInfo{3,8,ValueType::f32},std::nullopt,std::nullopt},
 			LoadConst{b},	
 			LoadConst{a},
 			FloatArithmetic{FloatArithmetic::Kind::Add, FloatType::f32},
@@ -43,7 +44,7 @@ int main() {
 		LoadConst{opt},
 		LoadConst{to_sub},
 		IntCmp{IntCmp::Kind::Eq, IntType::i32},
-		Scope{.kind = Scope::Kind::If,.info = BlockInfo{12,17,ValueType::f32},std::nullopt,std::nullopt},
+		Scope{Scope::Kind::If, BlockInfo{12,17,ValueType::f32},std::nullopt,std::nullopt},
 			LoadConst{b},	
 			LoadConst{a},
 			FloatArithmetic{FloatArithmetic::Kind::Sub, FloatType::f32},
@@ -52,7 +53,7 @@ int main() {
 		LoadConst{opt},
 		LoadConst{to_mul},
 		IntCmp{IntCmp::Kind::Eq, IntType::i32},
-		Scope{.kind = Scope::Kind::If,.info = BlockInfo{21,26,ValueType::f32},std::nullopt,std::nullopt},
+		Scope{Scope::Kind::If, BlockInfo{21,26,ValueType::f32},std::nullopt,std::nullopt},
 			LoadConst{b},	
 			LoadConst{a},
 			FloatArithmetic{FloatArithmetic::Kind::Mul, FloatType::f32},
