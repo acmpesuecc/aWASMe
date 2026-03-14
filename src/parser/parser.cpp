@@ -30,36 +30,37 @@ void parse_code_section(std::span<const uint8_t> data, Module& module) {
 			size_t numlocals_specifictype = leb128_decode(data, secSize, offset);
 			numlocals -= numlocals_specifictype;
 			Type type = static_cast<Type>(data[offset]);
+			std::cout << numlocals_specifictype << " locals defined of type ";
 			switch (type) {
 				case Type::I32: 
-					std::cout << numlocals_specifictype << " locals defined of type I32" << std::endl;
+					std::cout << "I32" << std::endl;
 					break;
 				case Type::I64: 
-					std::cout << numlocals_specifictype << " locals defined of type I64" << std::endl;
+					std::cout << "I64" << std::endl;
 					break;
 				case Type::F32: 
-					std::cout << numlocals_specifictype << " locals defined of type F32" << std::endl;
+					std::cout << "F32" << std::endl;
 					break;
 				case Type::F64: 
-					std::cout << numlocals_specifictype << " locals defined of type F64" << std::endl;
+					std::cout << "F64" << std::endl;
 					break;
 				case Type::I32_const: 
-					std::cout << numlocals_specifictype << " locals defined of type I32_const" << std::endl;
+					std::cout << "I32_const" << std::endl;
 					break;
 				case Type::I64_const: 
-					std::cout << numlocals_specifictype << " locals defined of type I64_const" << std::endl;
+					std::cout << "I64_const" << std::endl;
 					break;
 				case Type::F32_const: 
-					std::cout << numlocals_specifictype << " locals defined of type F32_const" << std::endl;
+					std::cout << "F32_const" << std::endl;
 					break;				
 				case Type::F64_const: 
-					std::cout << numlocals_specifictype << " locals defined of type F64_const" << std::endl;
+					std::cout << "F64_const" << std::endl;
 					break;
 				case Type::Global_get: 
-					std::cout << numlocals_specifictype << " locals defined of type Global_get" << std::endl;
+					std::cout << "Global_get" << std::endl;
 					break;
 				default:
-					std::cout << "Error - invalid type" << std::endl;		
+					std::cout << "(Error - invalid type)" << std::endl;
 					break;
 			}
 			offset++; //advance offset
@@ -248,14 +249,14 @@ void parse_type_section(std::span<const uint8_t> data, Module& module)
 		std::cout<<"Parameter count"<<pramCount<<std::endl;
 		for(uint32_t i=0;i<pramCount;i++)
 		{
-			Type pType =static_cast<Type>(data[offset++]); 
+			Type pType = static_cast<Type>(data[offset++]); ;
 			std::cout<<"PARAMETER TYPE OF "<<i<<(pType== Type::I32? " i32":" Other")<<std::endl;
 		}
 		uint32_t returnCount =leb128_decode(data,secSize,offset);
 		std::cout<<"Return count"<<returnCount<<std::endl;
 		for(uint32_t i=0;i<returnCount;i++)
 		{
-			Type rType =static_cast<Type>(data[offset++]); 
+			Type rType = static_cast<Type>(data[offset++]);
 			std::cout<<"RETURN TYPE OF "<<i<<(rType== Type::I32? " i32":" Other")<<std::endl;
 		}
 	}
@@ -291,11 +292,11 @@ void parse_global_section(std::span<const uint8_t>data,Module& module)
 	std::cout<<"Number of globals are: "<<globalCount<<std::endl;
 	for(uint32_t i=0;i<globalCount;i++)
 	{
-		Type gType =static_cast<Type>(data[offset++]); 
+		Type gType = static_cast<Type>(data[offset++]);
 		std::cout<<"Type is: "<<(gType== Type::I32? " i32\n":" Other\n");
 		bool mut =data[offset++];
 		std::cout<<"mut: "<<mut<<std::endl;
-		Type type =static_cast<Type>(data[offset++]); 
+		Type type = static_cast<Type>(data[offset++]); //Use InstrKind for this 
 		std::cout<<"opcode is : "<<(type == Type::I32_const? " i32.const\n":" Other\n");
 		size_t value = leb128_decode(data , secSize,offset); 
 		std::cout<<"Value is : "<<value<<std::endl;
@@ -338,6 +339,7 @@ void parse_table_section(std::span<const uint8_t>data,Module& module)
 		}
 	}
 }
+
 void parse_import_section(std::span<const uint8_t>data, Module& module)
 {
 	size_t secSize = data.size();
@@ -391,7 +393,7 @@ void parse_import_section(std::span<const uint8_t>data, Module& module)
 			case 0x03:
 			{
 				std::cout<<"Gloabal"<<std::endl;
-				Type gType =static_cast<Type>(data[offset++]);
+				Type gType = static_cast<Type>(data[offset++]);
 				std::cout<<"Type is: "<<(gType== Type::I32? " i32\n":" Other\n");
 				bool mut =data[offset++];
 				std::cout<<"mut: "<<mut<<std::endl;
@@ -405,6 +407,7 @@ void parse_import_section(std::span<const uint8_t>data, Module& module)
 	
 	}
 }
+
 void parse_element_section(std::span<const uint8_t>data,Module& module)
 {
 	size_t secSize =data.size();
@@ -418,7 +421,8 @@ void parse_element_section(std::span<const uint8_t>data,Module& module)
 			case Flag::ActiveImplicit:
 			case Flag::ActiveImplicitExpr:
 			{
-				Type opcode =static_cast<Type>(data[offset++]);
+				uint8_t offsetO=data[offset++];
+				Type opcode = static_cast<Type>(offsetO);
 				std::cout<<"OPCODE"<<(opcode==Type::I32_const?" i32.const\n": " Other\n");
 				size_t offsetVal=leb128_decode(data,secSize,offset);
 				offset++;//skipping END Byte
@@ -436,7 +440,8 @@ void parse_element_section(std::span<const uint8_t>data,Module& module)
 			case Flag::ActiveExplicitExpr:
 			{
 				size_t tableIND=leb128_decode(data,secSize,offset);
-				Type opcode =static_cast<Type>(data[offset++]);
+				uint8_t offsetO=data[offset++];
+				Type opcode = static_cast<Type>(offsetO);
 				std::cout<<"OPCODE"<<(opcode==Type::I32_const?"i32.const\n": "Other\n");
 				offset++;//skipping END Byte
 				uint8_t eleKind = data[offset++];//always 0x00
@@ -469,6 +474,7 @@ void parse_element_section(std::span<const uint8_t>data,Module& module)
 
 	}
 }
+
 void parse_data_section(std::span<const uint8_t>data,Module& module)
 {
 	size_t secSize = data.size();
@@ -482,7 +488,8 @@ void parse_data_section(std::span<const uint8_t>data,Module& module)
 		{
 			if(flag==Flag::ActiveExplicit)
 			size_t memIND=leb128_decode(data,secSize,offset);
-			Type opcode =static_cast<Type>(data[offset++]);
+			uint8_t offsetO=data[offset++];
+			Type opcode = static_cast<Type>(offsetO);
 			std::cout<<"OPCODE"<<(opcode==Type::I32_const?" i32.const\n": " Other\n");
 			size_t offsetVal=leb128_decode(data,secSize,offset);
 			offset++;//skipping END Byte
@@ -497,6 +504,7 @@ void parse_data_section(std::span<const uint8_t>data,Module& module)
 
 	}
 }
+
 void parse_export_section(std::span<const uint8_t>data,Module& module)
 {
 	size_t secSize=data.size();
