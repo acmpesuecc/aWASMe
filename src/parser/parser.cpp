@@ -495,7 +495,7 @@ void parse_data_section(std::span<const uint8_t>data,Module& module)
 			offset++;//skipping END Byte
 			byteCount=leb128_decode(data,secSize,offset);
 		}
-	
+
 		for(size_t i=0; i<byteCount;i++)
 		{
 			uint8_t byte=data[offset++];
