@@ -29,7 +29,32 @@ struct LoadConst {
 	Value value;
 };
 
-struct Arithmetic {
+enum FloatType {
+	f32,
+	f64
+};
+
+enum IntType {
+	i32,
+	i64
+};
+
+struct IntArithmetic {
+	enum class Kind {
+		Add,
+		Sub,
+		Mul,
+		DivS,
+		DivU,
+		RemS,
+		RemU
+	};
+
+	Kind op_kind;
+	IntType num_type;
+};
+
+struct FloatArithmetic {
 	enum class Kind {
 		Add,
 		Sub,
@@ -37,12 +62,46 @@ struct Arithmetic {
 	};
 
 	Kind op_kind;
-	ValueType num_type;
+	FloatType num_type;
 };
 
-enum IntType {
-	i32,
-	i64
+
+struct UnaryInt {
+	enum class Kind {
+		Clz,
+		Ctz,
+		Popcnt
+	};
+
+	Kind op_kind;
+	IntType num_type;
+};
+
+struct UnaryFloat {
+	enum class Kind {
+		Abs,
+		Neg,
+		Ciel,
+		Floor,
+		Trunc,
+		Nearest,
+		Sqrt
+	};
+
+	Kind op_kind;
+	FloatType num_type;
+};
+
+struct BinaryFloat {
+	enum class Kind {
+		Min,
+		Max,
+		CopySign
+			
+	};
+
+	Kind op_kind;
+	FloatType num_type;
 };
 
 struct UnaryBitwise {
@@ -69,18 +128,37 @@ struct BinaryBitwise {
 	IntType num_type;
 };
 
-struct Cmp {
+struct IntCmp {
+	enum class Kind {
+		Eq,
+		Ne,
+
+		LtU,
+		GtU,
+		LeU,
+		GeU,
+
+		LtS,
+		GtS,
+		LeS,
+		GeS,
+	};
+	Kind op_kind;
+	IntType num_type;
+};
+
+struct FloatCmp {
 	enum class Kind {
 		Eq,
 		Ne,
 		Lt,
 		Gt,
 		Le,
-		Ge
+		Ge,
 	};
 
 	Kind op_kind;
-	ValueType num_type;
+	FloatType num_type;
 };
 
 struct Scope {
@@ -106,7 +184,6 @@ struct Call {
 
 struct Br { size_t index; };
 
-
 struct Local {
 	enum Kind {
 		Get,
@@ -128,8 +205,13 @@ using Instruction = std::variant<
 	Nop,
 	Unreachable,
 	LoadConst,
-	Arithmetic,
-	Cmp,	
+	IntArithmetic,
+	FloatArithmetic,
+	IntCmp,	
+	FloatCmp,	
+	UnaryInt,
+	UnaryFloat,
+	BinaryFloat,
 	UnaryBitwise,
 	BinaryBitwise,
 	Scope,
