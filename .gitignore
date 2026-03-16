@@ -1,3 +1,4 @@
 main
 testfiles/
 .vscode/
+.build/
