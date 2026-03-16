@@ -25,41 +25,163 @@ std::string to_string(Instruction i) {
 			return out;
 
 		},
-		[](Arithmetic& a) { 
-			std::string out = to_string(a.num_type) + ".";
+		[](IntArithmetic& a) { 
+			std::string out = a.num_type == IntType::i32 ? "i32.": "i64.";
 			switch(a.op_kind) {
-				case Arithmetic::Kind::Add:
+				case IntArithmetic::Kind::Add:
 					out += "add";
 					break;
-				case Arithmetic::Kind::Sub:
+				case IntArithmetic::Kind::Sub:
 					out += "sub";
 					break;
-				case Arithmetic::Kind::Mul:
+				case IntArithmetic::Kind::Mul:
+					out += "mul";
+					break;
+				case IntArithmetic::Kind::DivS:
+					out += "div_s";
+					break;
+				case IntArithmetic::Kind::RemS:
+					out += "rem_s";
+					break;
+				case IntArithmetic::Kind::DivU:
+					out += "div_u";
+					break;
+				case IntArithmetic::Kind::RemU:
+					out += "rem_u";
+					break;
+			}
+
+			return out;
+		},
+		[](FloatArithmetic& a) { 
+			std::string out = a.num_type == FloatType::f32 ? "f32.": "f64.";
+			switch(a.op_kind) {
+				case FloatArithmetic::Kind::Add:
+					out += "add";
+					break;
+				case FloatArithmetic::Kind::Sub:
+					out += "sub";
+					break;
+				case FloatArithmetic::Kind::Mul:
 					out += "mul";
 					break;
 			}
 			return out;
 		},
-		[](Cmp& c) {
-			std::string out = to_string(c.num_type) + ".";
+		[](FloatCmp& c) {
+			std::string out = c.num_type == FloatType::f32 ? "f32.": "f64.";
 			switch(c.op_kind) {
-				case Cmp::Kind::Eq:
+				case FloatCmp::Kind::Eq:
 					out += "eq";
 					break;
-				case Cmp::Kind::Ne:
+				case FloatCmp::Kind::Ne:
 					out += "ne";
 					break;
-				case Cmp::Kind::Lt:
+				case FloatCmp::Kind::Lt:
 					out += "lt";
 					break;
-				case Cmp::Kind::Gt:
+				case FloatCmp::Kind::Gt:
 					out += "gt";
 					break;
-				case Cmp::Kind::Le:
+				case FloatCmp::Kind::Le:
 					out += "le";
 					break;
-				case Cmp::Kind::Ge:
+				case FloatCmp::Kind::Ge:
 					out += "ge";
+					break;
+			}
+			return out;
+		},
+		[](IntCmp& c) {
+			std::string out = c.num_type == IntType::i32 ? "i32.": "i64.";
+			switch(c.op_kind) {
+				case IntCmp::Kind::Eq:
+					out += "eq";
+					break;
+				case IntCmp::Kind::Ne:
+					out += "ne";
+					break;
+				case IntCmp::Kind::LtU:
+					out += "lt_u";
+					break;
+				case IntCmp::Kind::GtU:
+					out += "gt_u";
+					break;
+				case IntCmp::Kind::LeU:
+					out += "le_u";
+					break;
+				case IntCmp::Kind::GeU:
+					out += "ge_u";
+					break;
+				case IntCmp::Kind::LtS:
+					out += "lt_s";
+					break;
+				case IntCmp::Kind::GtS:
+					out += "gt_s";
+					break;
+				case IntCmp::Kind::LeS:
+					out += "le_s";
+					break;
+				case IntCmp::Kind::GeS:
+					out += "ge_s";
+					break;
+			}
+			return out;
+		},
+		[](UnaryInt& a) { 
+			std::string out = a.num_type == IntType::i32 ? "i32.": "i64.";
+			switch(a.op_kind) {
+				case UnaryInt::Kind::Clz:
+					out += "clz";
+					break;
+				case UnaryInt::Kind::Ctz:
+					out += "ctz";
+					break;
+				case UnaryInt::Kind::Popcnt:
+					out += "popcnt";
+					break;
+			}
+
+			return out;
+		},
+		[](UnaryFloat& u) { 
+			std::string out = u.num_type == FloatType::f32 ? "f32.": "f64.";
+			switch(u.op_kind) {
+				case UnaryFloat::Kind::Abs:
+					out += "abs";
+					break;
+				case UnaryFloat::Kind::Neg:
+					out += "neg";
+					break;
+				case UnaryFloat::Kind::Ciel:
+					out += "ciel";
+					break;
+				case UnaryFloat::Kind::Floor:
+					out += "floor";
+					break;
+				case UnaryFloat::Kind::Trunc:
+					out += "trunc";
+					break;
+				case UnaryFloat::Kind::Nearest:
+					out += "nearest";
+					break;
+				case UnaryFloat::Kind::Sqrt:
+					out += "sqrt";
+					break;
+			}
+			return out;
+		},
+		[](BinaryFloat& b) { 
+			std::string out = b.num_type == FloatType::f32 ? "f32.": "f64.";
+			switch(b.op_kind) {
+				case BinaryFloat::Kind::Min:
+					out += "min";
+					break;
+				case BinaryFloat::Kind::Max:
+					out += "max";
+					break;
+				case BinaryFloat::Kind::CopySign:
+					out += "copysign";
 					break;
 			}
 			return out;
