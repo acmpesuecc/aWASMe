@@ -1,4 +1,4 @@
-#include"instruction.hpp"
+#include"engine/instruction.hpp"
 
 std::string to_string(Instruction i) {
 	const auto visitor = overloads {
@@ -251,6 +251,19 @@ std::string to_string(Instruction i) {
 					break;
 				case Local::Kind::Tee:
 					out += "tee";
+					break;
+			}
+			out += " " + std::to_string(l.index);
+			return out;
+		},
+		[](Global& l) { 
+			std::string out = "global.";
+			switch(l.kind) {
+				case Global::Kind::Get:
+					out += "get";
+					break;
+				case Global::Kind::Set:
+					out += "set";
 					break;
 			}
 			out += " " + std::to_string(l.index);

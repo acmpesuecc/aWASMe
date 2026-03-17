@@ -2,7 +2,7 @@
 #define INSTRUCTION_HPP
 
 #include <optional>
-#include <value.hpp>
+#include <engine/value.hpp>
 
 typedef struct {
 	size_t block_start; // index into the start of the block (i.e, the instruction which creates the block and NOT the first instruction of the block)
@@ -195,6 +195,16 @@ struct Local {
 	size_t index;
 };
 
+struct Global {
+	enum Kind {
+		Get,
+		Set,
+	};
+
+	Kind kind;
+	size_t index;
+};
+
 template<class... Ts>
 struct overloads : Ts... { using Ts::operator()...; };
 
@@ -219,7 +229,8 @@ using Instruction = std::variant<
 	Return,
 	Br,
 	Call,
-	Local
+	Local,
+	Global
 >;
 
 std::string to_string(Instruction i);

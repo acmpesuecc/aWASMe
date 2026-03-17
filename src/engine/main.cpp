@@ -3,8 +3,8 @@
   */
 
 #include<iostream>
-#include"vm.hpp"
-#include"errors.hpp"
+#include"engine/vm.hpp"
+#include"engine/errors.hpp"
 
 int main() {
 	VM vm;
@@ -31,7 +31,6 @@ int main() {
 
 
 	std::vector<Instruction> program = { 
-		Unreachable{},
 		LoadConst{opt},
 		LoadConst{to_add},
 		IntCmp{IntCmp::Kind::Eq, IntType::i32},
