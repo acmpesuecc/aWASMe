@@ -1,6 +1,11 @@
 /* To execute: 
-	g++ -std=c++20 -I./include src/parser/main.cpp src/parser/parser.cpp -o main
-	./main
+	g++ -std=c++20 -I./include src/parser/main.cpp src/parser/parser.cpp -o parser.exe
+	./parser.exe "<path to .wasm file>"
+
+	(or)
+
+	make run-parser ARGS="<path to .wasm file>"
+		Note: this includes extra warnings -Wall -Wextra
 */
 
 #include<iostream>
@@ -16,6 +21,7 @@ int main (int argc, char* argv[]) {
 	if (argc != 2) 
 	{
 		std::cout << "Expected 1 file path as command line input" << std::endl;
+		std::cout << "\tNote: If running through make command 'make run-parser', expected usage is: make run-parser ARGS=\"<path>\"" << std::endl;
 		return 0;
 	}
 	

@@ -1,4 +1,5 @@
-main
+engine.exe
+parser.exe
 testfiles/
 .vscode/
-.build/
+build/
