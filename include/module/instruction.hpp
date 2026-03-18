@@ -211,6 +211,16 @@ struct Global {
 	size_t index;
 };
 
+/// i32 and i64 interconverters 
+struct IntConverters {
+	enum {
+		Wrap,
+		ExtendU,
+		ExtendS
+	} kind;
+	
+};
+
 template<class... Ts>
 struct overloads : Ts... { using Ts::operator()...; };
 
@@ -236,7 +246,8 @@ using Instruction = std::variant<
 	Br,
 	Call,
 	Local,
-	Global
+	Global,
+	IntConverters
 >;
 
 std::string to_string(Instruction i);

@@ -81,4 +81,8 @@ class VM {
 
 		/// Sets the ip to the given ip after performing bounds checking. If given index >= current number of instructions then InvalidInstructionPointer exception is thrown
 		void set_ip(size_t index);
+
+
+		/// Throws an InvalidType exception if the top value isn't of the given type, else returns the top value
+		Value pop_type_or_error(ValueType type);
 };

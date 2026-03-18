@@ -271,6 +271,15 @@ std::string to_string(Instruction i) {
 			}
 			out += " " + std::to_string(l.index);
 			return out;
+		},
+		[](IntConverters& i) {
+			std::string out = "unreachable";
+			switch(i.kind) {
+				case IntConverters::Wrap:  out = "i32.wrap_i64"; break; 
+				case IntConverters::ExtendU:  out = "i64.extend_i32_u"; break; 
+				case IntConverters::ExtendS:  out = "i64.extend_i32_s"; break; 
+			}
+			return out;
 		}
 	};
 

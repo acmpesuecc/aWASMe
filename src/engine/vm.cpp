@@ -680,7 +680,33 @@ bool VM::run_instr(const Instruction& instr) {
 						}
 				}
 				return true;
+			},
+			[&](const IntConverters ic) {
+				switch(ic.kind) {
+					case IntConverters::Wrap:  
+						{
+							
+							Value v = this->pop_type_or_error(ValueType::i64);
+							int64_t i64_val = std::get<int64_t>(v);
+							int32_t out = (int32_t)(i64_val % (int64_t(2) << 32));
+							this->push(out);
+							return true;
+						}
+					case IntConverters::ExtendU: 
+						{
+							Value v = this->pop_type_or_error(ValueType::i32);
+							this->push((int64_t)((uint32_t)std::get<int32_t>(v)));
+							return true;
+						}
+					case IntConverters::ExtendS:  
+						{
+							Value v = this->pop_type_or_error(ValueType::i32);
+							this->push((int64_t)std::get<int32_t>(v));
+							return true;
+						}
+				}
 			}
+	
 	};
 	return std::visit(visitor,instr);
 }
@@ -757,4 +783,9 @@ size_t VM::register_global(Value intial_value, bool is_mutable) {
 	size_t index = this->globals.size();
 	this->globals.push_back(g);
 	return index;
+}
+
+Value VM::pop_type_or_error(ValueType type) {
+	this->expect_stack(std::vector{type});
+	return this->pop().value();
 }
