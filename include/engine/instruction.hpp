@@ -59,6 +59,7 @@ struct FloatArithmetic {
 		Add,
 		Sub,
 		Mul,
+		Div,
 	};
 
 	Kind op_kind;

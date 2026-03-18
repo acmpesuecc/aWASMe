@@ -65,6 +65,9 @@ std::string to_string(Instruction i) {
 				case FloatArithmetic::Kind::Mul:
 					out += "mul";
 					break;
+				case FloatArithmetic::Kind::Div:
+					out += "div";
+					break;
 			}
 			return out;
 		},

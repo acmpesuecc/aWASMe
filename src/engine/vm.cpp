@@ -88,6 +88,7 @@ struct FloatArithemticVisitor {
 					case FloatArithmetic::Kind::Add: return a + b;
 					case FloatArithmetic::Kind::Sub: return a - b;
 					case FloatArithmetic::Kind::Mul: return a * b;
+					case FloatArithmetic::Kind::Div: return a / b;
 				}
 				throw std::runtime_error("unreachable");
 			}
