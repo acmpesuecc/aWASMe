@@ -493,6 +493,12 @@ bool VM::run_instr(const Instruction& instr) {
 				if(this->control_frames.size() <=  bk) 
 					throw StackUnderflowError();
 
+				if(instr.is_unconditional) {
+					this->expect_stack({ValueType::i32});
+					Value v = this->pop().value();
+					if(!std::get<int32_t>(v)) return true;
+				}
+
 				std::optional<Value> return_value = {};
 
 				ControlFrame req_cf = this->control_frames.at(this->control_frames.size()-bk-1);

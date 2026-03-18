@@ -182,7 +182,11 @@ struct Call {
 	size_t index;	
 };
 
-struct Br { size_t index; };
+struct Br { 
+	size_t index; 
+	/// If this is false, then it behaves like a br_if
+	bool is_unconditional;
+};
 
 struct Local {
 	enum Kind {

@@ -238,7 +238,7 @@ std::string to_string(Instruction i) {
 		},
 		[](End&) { return std::string("end"); },
 		[](Return&) { return std::string("return"); },
-		[](Br& b) { return "br " + std::to_string(b.index); },
+		[](Br& b) { return ( b.is_unconditional  ? "br " : "br_if ") + std::to_string(b.index); },
 		[](Call& c) { return "call " + std::to_string(c.index); },
 		[](Local& l) { 
 			std::string out = "local.";
