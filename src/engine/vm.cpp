@@ -315,8 +315,8 @@ bool VM::run_instr(const Instruction& instr) {
 				ValueType type = a_instr.num_type == IntType::i32 ? ValueType::i32 : ValueType::i64;	
 				this->expect_stack({type,type});
 
-				Value v1 = this->pop().value();
 				Value v2 = this->pop().value();
+				Value v1 = this->pop().value();
 
 				this->push(std::visit(IntArithemticVisitor{a_instr.op_kind},v1,v2));
 				return true;
@@ -325,8 +325,8 @@ bool VM::run_instr(const Instruction& instr) {
 				ValueType type = a_instr.num_type == FloatType::f32 ? ValueType::f32 : ValueType::f64;	
 				this->expect_stack({type,type});
 
-				Value v1 = this->pop().value();
 				Value v2 = this->pop().value();
+				Value v1 = this->pop().value();
 
 				this->push(std::visit(FloatArithemticVisitor{a_instr.op_kind},v1,v2));
 				return true;
@@ -335,8 +335,8 @@ bool VM::run_instr(const Instruction& instr) {
 				ValueType type = instr.num_type == IntType::i32 ? ValueType::i32 : ValueType::i64;	
 				this->expect_stack({type,type});
 
-				Value v1 = this->pop().value();
 				Value v2 = this->pop().value();
+				Value v1 = this->pop().value();
 
 				Value res = std::visit(IntCmpVisitor{instr.op_kind},v1,v2);
 
@@ -360,8 +360,8 @@ bool VM::run_instr(const Instruction& instr) {
 				ValueType type = instr.num_type == FloatType::f32 ? ValueType::f32 : ValueType::f64;	
 				this->expect_stack({type,type});
 
-				Value v1 = this->pop().value();
 				Value v2 = this->pop().value();
+				Value v1 = this->pop().value();
 
 				Value res = std::visit(FloatCmpVisitor{instr.op_kind},v1,v2);
 
@@ -386,8 +386,8 @@ bool VM::run_instr(const Instruction& instr) {
 				ValueType type = instr.num_type == FloatType::f32 ? ValueType::f32 : ValueType::f64;	
 				this->expect_stack({type});
 
-				Value v1 = this->pop().value();
 				Value v2 = this->pop().value();
+				Value v1 = this->pop().value();
 
 				Value res = std::visit(BinaryFloatVisitor{instr.op_kind},v1,v2);
 
@@ -401,8 +401,8 @@ bool VM::run_instr(const Instruction& instr) {
 
 				this->expect_stack({type,type});
 
-				Value v1 = this->pop().value();
 				Value v2 = this->pop().value();
+				Value v1 = this->pop().value();
 
 				this->push(std::visit(BinaryBitwiseVisitor{instr.op_kind},v1,v2));
 				return true;
