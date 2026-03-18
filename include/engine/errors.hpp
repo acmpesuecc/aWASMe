@@ -5,8 +5,7 @@
 #include<exception>
 #include<vector>
 
-#include"value.hpp"
-#include"instruction.hpp"
+#include "module/instruction.hpp"
 
 class ExpectStackError: public std::exception {
 	private:

@@ -3,8 +3,7 @@
 
 #include<vector>
 
-#include"instruction.hpp"
-#include"value.hpp"
+#include "module/instruction.hpp"
 
 struct FunctionInfo {
 	BlockInfo block_info;

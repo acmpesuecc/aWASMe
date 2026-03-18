@@ -1,8 +1,6 @@
-#ifndef INSTRUCTION_HPP 
-#define INSTRUCTION_HPP
-
+#pragma once
 #include <optional>
-#include <value.hpp>
+#include "value.hpp"
 
 typedef struct {
 	size_t block_start; // index into the start of the block (i.e, the instruction which creates the block and NOT the first instruction of the block)
@@ -29,79 +27,20 @@ struct LoadConst {
 	Value value;
 };
 
-enum FloatType {
-	f32,
-	f64
+struct Arithmetic {
+	enum class Kind {
+		Add,
+		Sub,
+		Mul,
+	};
+
+	Kind op_kind;
+	ValueType num_type;
 };
 
 enum IntType {
 	i32,
 	i64
-};
-
-struct IntArithmetic {
-	enum class Kind {
-		Add,
-		Sub,
-		Mul,
-		DivS,
-		DivU,
-		RemS,
-		RemU
-	};
-
-	Kind op_kind;
-	IntType num_type;
-};
-
-struct FloatArithmetic {
-	enum class Kind {
-		Add,
-		Sub,
-		Mul,
-	};
-
-	Kind op_kind;
-	FloatType num_type;
-};
-
-
-struct UnaryInt {
-	enum class Kind {
-		Clz,
-		Ctz,
-		Popcnt
-	};
-
-	Kind op_kind;
-	IntType num_type;
-};
-
-struct UnaryFloat {
-	enum class Kind {
-		Abs,
-		Neg,
-		Ciel,
-		Floor,
-		Trunc,
-		Nearest,
-		Sqrt
-	};
-
-	Kind op_kind;
-	FloatType num_type;
-};
-
-struct BinaryFloat {
-	enum class Kind {
-		Min,
-		Max,
-		CopySign
-			
-	};
-
-	Kind op_kind;
-	FloatType num_type;
 };
 
 struct UnaryBitwise {
@@ -128,37 +67,18 @@ struct BinaryBitwise {
 	IntType num_type;
 };
 
-struct IntCmp {
-	enum class Kind {
-		Eq,
-		Ne,
-
-		LtU,
-		GtU,
-		LeU,
-		GeU,
-
-		LtS,
-		GtS,
-		LeS,
-		GeS,
-	};
-	Kind op_kind;
-	IntType num_type;
-};
-
-struct FloatCmp {
+struct Cmp {
 	enum class Kind {
 		Eq,
 		Ne,
 		Lt,
 		Gt,
 		Le,
-		Ge,
+		Ge
 	};
 
 	Kind op_kind;
-	FloatType num_type;
+	ValueType num_type;
 };
 
 struct Scope {
@@ -184,6 +104,7 @@ struct Call {
 
 struct Br { size_t index; };
 
+
 struct Local {
 	enum Kind {
 		Get,
@@ -205,13 +126,8 @@ using Instruction = std::variant<
 	Nop,
 	Unreachable,
 	LoadConst,
-	IntArithmetic,
-	FloatArithmetic,
-	IntCmp,	
-	FloatCmp,	
-	UnaryInt,
-	UnaryFloat,
-	BinaryFloat,
+	Arithmetic,
+	Cmp,	
 	UnaryBitwise,
 	BinaryBitwise,
 	Scope,
@@ -223,5 +139,3 @@ using Instruction = std::variant<
 >;
 
 std::string to_string(Instruction i);
-
-#endif

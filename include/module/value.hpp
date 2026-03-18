@@ -1,10 +1,7 @@
-#ifndef VALUE_HPP
-#define VALUE_HPP
-
+#pragma once
 #include<variant>
 #include<cstdint>
 #include<stdfloat>
-
 #include<string>
 
 typedef std::variant<int32_t,int64_t,float,double> Value;
@@ -20,4 +17,3 @@ Value zero_from_value_type(ValueType);
 
 std::string to_string(ValueType v);
 std::string to_string(Value v);
-#endif
