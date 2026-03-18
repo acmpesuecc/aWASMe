@@ -19,3 +19,12 @@
 - Dealt with parsing floating point numbers (single and double precision)
 ### Next Week
 - Decode the code section, i.e. push all the required data from the code section into the module object that is to be sent to the engine
+
+## Shashi's Progress
+- Did some edge case testing on the Stack & Control-Flow blocks
+- Started working on linear memory for variables
+- Also started on control structure memory management
+### Next Week
+-  Merging the engine & parser
+-  Polishing memory management as more types of data are included
+-  And more testing for bugs & memory leaks
