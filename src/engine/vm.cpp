@@ -3,6 +3,8 @@
 #include<cmath>
 #include<bit>
 #include<type_traits>
+#include<optional>
+
 #include "engine/vm.hpp"
 #include "engine/errors.hpp"
 
@@ -643,6 +645,34 @@ bool VM::run_instr(const Instruction& instr) {
 				}
 
 				return true;
+			},
+
+			[&](const Global& global) {
+				if(global.index >= this->globals.size()) throw InvalidIndex(InvalidIndex::IndexFor::Global,global.index);
+
+				switch(global.kind) {
+					case Global::Kind::Get: 
+						{
+							GlobalVar g = this->globals.at(global.index);
+							this->push(g.value);
+							break;
+						}
+					case Global::Kind::Set: 
+						{
+							GlobalVar& g = this->globals[global.index];
+							if(!g.is_mutable) {
+								std::string s = "Attempted to modify immutable global `"+std::to_string(global.index)+"`";
+								throw MutabilityError(s);
+							}
+							this->expect_stack(std::vector<ValueType>{to_value_type(g.value)});
+							auto t = this->pop().value();
+							std::cout<< std::get<int32_t>(t) << std::endl;
+
+							this->globals[global.index].value = t;
+							break;
+						}
+				}
+				return true;
 			}
 	};
 	return std::visit(visitor,instr);
@@ -713,4 +743,11 @@ size_t VM::register_function(FunctionInfo f) {
 void VM::set_ip(size_t to) {
 	if(this->instructions.size() <= to) throw InvalidInstructionPointer(to,this->instructions.size());
 	this->ip = to;
+}
+
+size_t VM::register_global(Value intial_value, bool is_mutable) {
+	GlobalVar g = {.value = intial_value, .is_mutable = is_mutable};
+	size_t index = this->globals.size();
+	this->globals.push_back(g);
+	return index;
 }

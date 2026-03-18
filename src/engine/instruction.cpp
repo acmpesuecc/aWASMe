@@ -255,6 +255,19 @@ std::string to_string(Instruction i) {
 			}
 			out += " " + std::to_string(l.index);
 			return out;
+		},
+		[](Global& l) { 
+			std::string out = "global.";
+			switch(l.kind) {
+				case Global::Kind::Get:
+					out += "get";
+					break;
+				case Global::Kind::Set:
+					out += "set";
+					break;
+			}
+			out += " " + std::to_string(l.index);
+			return out;
 		}
 	};
 

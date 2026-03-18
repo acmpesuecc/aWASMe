@@ -5,6 +5,7 @@
 
 #include "module/instruction.hpp"
 #include "engine/funcs.hpp"
+#include "engine/global.hpp"
 
 class ControlFrame {	
 	private:
@@ -49,6 +50,8 @@ class VM {
 		// Registers a function into the VM and returns the index which will be used to refer to it.
 		size_t register_function(FunctionInfo f);
 
+		/// Returns the index of the registered global
+	 	size_t register_global(Value initial_value,bool is_mutable);
 
 	private:
 		std::vector<Value> stack;
@@ -61,6 +64,8 @@ class VM {
 		// Currently, only stores WASM functions and not imported ones
 		// NOTE: In the future when imported functions are supported, external functions must occupy lower indicies than WASM defined functions. In other words, register all imported functions first, then WASM defined one
 		std::vector<FunctionInfo> functions; 
+
+		std::vector<GlobalVar> globals;
 
 		bool run_instr(const Instruction& instr);
 
