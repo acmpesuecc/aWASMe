@@ -2,7 +2,8 @@
 #define INSTRUCTION_HPP
 
 #include <optional>
-#include <engine/value.hpp>
+
+#include "module/value.hpp"
 
 typedef struct {
 	size_t block_start; // index into the start of the block (i.e, the instruction which creates the block and NOT the first instruction of the block)

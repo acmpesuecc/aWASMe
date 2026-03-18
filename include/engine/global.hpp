@@ -1,7 +1,7 @@
 #ifndef GLOBAL_HPP 
 #define GLOBAL_HPP
 
-#include<engine/value.hpp>
+#include"module/value.hpp"
 
 typedef struct {
 	Value value;

@@ -1,10 +1,11 @@
 /*to execute: 
-	make && ./main
+	make engine && ./engine.exe
   */
 
 #include<iostream>
-#include"engine/vm.hpp"
-#include"engine/errors.hpp"
+
+#include "engine/vm.hpp"
+#include "engine/errors.hpp"
 
 int main() {
 	VM vm;
@@ -34,7 +35,7 @@ int main() {
 		LoadConst{opt},
 		LoadConst{to_add},
 		IntCmp{IntCmp::Kind::Eq, IntType::i32},
-		Scope{Scope::Kind::If,BlockInfo{3,8,ValueType::f32},std::nullopt,std::nullopt},
+		Scope{.kind = Scope::Kind::If,.info = BlockInfo{3,8,ValueType::i32}, .else_info = std::nullopt, .if_else_end = std::nullopt},
 			LoadConst{b},	
 			LoadConst{a},
 			FloatArithmetic{FloatArithmetic::Kind::Add, FloatType::f32},
@@ -43,7 +44,7 @@ int main() {
 		LoadConst{opt},
 		LoadConst{to_sub},
 		IntCmp{IntCmp::Kind::Eq, IntType::i32},
-		Scope{Scope::Kind::If, BlockInfo{12,17,ValueType::f32},std::nullopt,std::nullopt},
+		Scope{.kind = Scope::Kind::If,.info = BlockInfo{12,17,ValueType::i32}, .else_info = std::nullopt, .if_else_end = std::nullopt},
 			LoadConst{b},	
 			LoadConst{a},
 			FloatArithmetic{FloatArithmetic::Kind::Sub, FloatType::f32},
@@ -52,7 +53,7 @@ int main() {
 		LoadConst{opt},
 		LoadConst{to_mul},
 		IntCmp{IntCmp::Kind::Eq, IntType::i32},
-		Scope{Scope::Kind::If, BlockInfo{21,26,ValueType::f32},std::nullopt,std::nullopt},
+		Scope{.kind = Scope::Kind::If,.info = BlockInfo{21,26,ValueType::i32}, .else_info = std::nullopt, .if_else_end = std::nullopt},
 			LoadConst{b},	
 			LoadConst{a},
 			FloatArithmetic{FloatArithmetic::Kind::Mul, FloatType::f32},

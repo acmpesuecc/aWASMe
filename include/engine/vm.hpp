@@ -1,15 +1,11 @@
-#ifndef VM_HPP
-#define VM_HPP
-
 #include<optional>
 #include<stack>
 #include<vector>
 #include<variant>
 
-#include"engine/value.hpp"
-#include "engine/instruction.hpp"
+#include "module/instruction.hpp"
+#include "engine/funcs.hpp"
 #include "engine/global.hpp"
-#include"engine/funcs.hpp"
 
 class ControlFrame {	
 	private:
@@ -86,4 +82,3 @@ class VM {
 		/// Sets the ip to the given ip after performing bounds checking. If given index >= current number of instructions then InvalidInstructionPointer exception is thrown
 		void set_ip(size_t index);
 };
-#endif
