@@ -280,7 +280,35 @@ std::string to_string(Instruction i) {
 				case IntConverters::ExtendS:  out = "i64.extend_i32_s"; break; 
 			}
 			return out;
-		}
+		},
+
+		[](FloatConverters& i) {
+			std::string out = "unreachable";
+			switch(i.kind) {
+				case FloatConverters::Promote:  out = "f64.promote_f32"; break; 
+				case FloatConverters::Demote:  out = "f32.demote_f64"; break; 
+			}
+			return out;
+		},
+
+		[](FloatToIntTrunc& i) {
+			std::string out = "";
+			out += i.to == IntType::i32 ? "i32" : "i64";
+			out += ".trunc_";
+			out += i.from == FloatType::f32 ? "f32" : "f64";
+			out += "_";
+			out += i.is_signed ? "s" : "u";
+			return out;
+		},
+		[](IntToFloat& i) {
+			std::string out = "";
+			out += i.to == FloatType::f32 ? "f32" : "f64";
+			out += ".convert_";
+			out += i.from == IntType::i32 ? "i32" : "i64";
+			out += "_";
+			out += i.is_signed ? "s" : "u";
+			return out;
+		},
 	};
 
 	return std::visit(visitor,i);

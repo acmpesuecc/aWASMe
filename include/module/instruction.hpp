@@ -221,6 +221,26 @@ struct IntConverters {
 	
 };
 
+/// f32 and f64 interconverters 
+struct FloatConverters {
+	enum {
+		Promote,
+		Demote,
+	} kind;
+};
+
+struct FloatToIntTrunc {
+	IntType to;
+	FloatType from;
+	bool is_signed;
+};
+
+struct IntToFloat {
+	FloatType to;
+	IntType from;
+	bool is_signed;
+};
+
 template<class... Ts>
 struct overloads : Ts... { using Ts::operator()...; };
 
@@ -247,7 +267,10 @@ using Instruction = std::variant<
 	Call,
 	Local,
 	Global,
-	IntConverters
+	IntConverters,
+	FloatConverters,
+	FloatToIntTrunc,
+	IntToFloat
 >;
 
 std::string to_string(Instruction i);

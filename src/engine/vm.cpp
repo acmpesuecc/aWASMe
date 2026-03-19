@@ -306,6 +306,59 @@ struct BinaryBitwiseVisitor {
 		}
 };
 
+
+struct FloatToIntTruncVisitor {
+	IntType convert_to;
+	bool is_signed;
+
+	template<typename T>
+	Value operator()(const T& v) {
+		if(!std::is_same_v<T,float> && !std::is_same_v<T,double>) throw std::runtime_error("Only accepts float or double type");
+
+		if(convert_to == IntType::i32) {
+			int32_t t = static_cast<int32_t>(v);
+			if(!is_signed) {
+				return Value{int32_t((uint32_t)t)}; // TODO: raise a trap if this is outside [0,2^32]?
+			}
+			return Value{t};
+		}else {
+			int64_t t = static_cast<int64_t>(v);
+			if(!is_signed) {
+				return Value{int64_t((uint64_t)t)};// TODO: raise a trap if this is outside [0,2^64]?
+			}
+			return Value{t};
+		}
+		throw std::runtime_error("Unreachable");
+
+	}
+};
+
+struct IntToFloatVisitor {
+	FloatType convert_to;
+	bool is_signed;
+
+	template<typename T>
+	Value operator()(const T& v) {
+		if(!std::is_same_v<T,int32_t> && !std::is_same_v<T,int64_t>) throw std::runtime_error("Only accepts int32_t or int64_t type");
+
+		if(convert_to == FloatType::f32) {
+			float t = static_cast<float>(v);
+			if(!is_signed) {
+				return Value{float((uint32_t)t)}; 
+			}
+			return Value{t};
+		}else {
+			double t = static_cast<double>(v);
+			if(!is_signed) {
+				return Value{double((uint64_t)t)};
+			}
+			return Value{t};
+		}
+		throw std::runtime_error("Unreachable");
+
+	}
+};
+
 bool VM::run_instr(const Instruction& instr) {
 	const auto visitor = overloads {
 		[&](const Nop&) { return true;},
@@ -705,6 +758,40 @@ bool VM::run_instr(const Instruction& instr) {
 							return true;
 						}
 				}
+				throw std::runtime_error("Unreachable");
+			},
+
+			[&](const FloatConverters fc) {
+				switch(fc.kind) {
+					case FloatConverters::Promote:
+						{
+							Value v = this->pop_type_or_error(ValueType::f32);
+							this->push((double)std::get<float>(v));
+							break;
+						}
+					case FloatConverters::Demote:
+						{
+							Value v = this->pop_type_or_error(ValueType::f64);
+							this->push((float)std::get<double>(v));
+							break;
+						}
+				}
+				return true;
+			},
+
+			[&](const FloatToIntTrunc ic) { 
+				ValueType from_type = ic.from == FloatType::f32 ? ValueType::f32 : ValueType::f64;
+				Value v = this->pop_type_or_error(from_type);
+				Value res = std::visit(FloatToIntTruncVisitor{ic.to,ic.is_signed},v);
+				this->push(res);
+				return true;
+			},
+			[&](const IntToFloat itf) { 
+				ValueType from_type = itf.from == IntType::i32 ? ValueType::i32 : ValueType::i64;
+				Value v = this->pop_type_or_error(from_type);
+				Value res = std::visit(IntToFloatVisitor{itf.to,itf.is_signed},v);
+				this->push(res);
+				return true;
 			}
 	
 	};
@@ -766,7 +853,6 @@ void VM::expect_stack_exact(std::vector<ValueType> expected_values) {
 	}else if(this->stack.size() != expected_values.size()) throw ExpectStackError(expected_values,this->stack);
 	this->expect_stack(expected_values);
 }
-
 
 size_t VM::register_function(FunctionInfo f) {
 	this->functions.push_back(f);	
