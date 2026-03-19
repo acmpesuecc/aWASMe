@@ -28,3 +28,9 @@
 -  Merging the engine & parser
 -  Polishing memory management as more types of data are included
 -  And more testing for bugs & memory leaks
+
+## Likith's Progress
+- Refactored enum to use typecasting instead of a helper function.
+- Started validating section data
+### Next Week
+- Complete validating section data
