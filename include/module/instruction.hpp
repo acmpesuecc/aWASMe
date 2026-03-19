@@ -241,6 +241,13 @@ struct IntToFloat {
 	bool is_signed;
 };
 
+struct ReinterpretBits {
+	// We only take one value type, because if we have it, we automatically know (or rather, its automatically set) what the type to convert to will be
+	//
+	// Example: reinterpreting i32 would be f32, and reinterpreting f64 would be i64
+	ValueType from;
+};
+
 template<class... Ts>
 struct overloads : Ts... { using Ts::operator()...; };
 
@@ -270,7 +277,8 @@ using Instruction = std::variant<
 	IntConverters,
 	FloatConverters,
 	FloatToIntTrunc,
-	IntToFloat
+	IntToFloat,
+	ReinterpretBits
 >;
 
 std::string to_string(Instruction i);

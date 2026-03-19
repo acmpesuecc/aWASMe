@@ -792,8 +792,30 @@ bool VM::run_instr(const Instruction& instr) {
 				Value res = std::visit(IntToFloatVisitor{itf.to,itf.is_signed},v);
 				this->push(res);
 				return true;
+			},
+			[&](const ReinterpretBits rb) {
+				ValueType from = rb.from;
+				Value v = this->pop_type_or_error(from);
+				Value rval;
+				switch(from) {
+					case ValueType::i32:
+						rval = (float)std::get<int32_t>(v);
+						break;
+					case ValueType::i64:
+						rval = (double)std::get<int64_t>(v);
+						break;
+					case ValueType::f32:
+						rval = (int32_t)std::get<float>(v);
+						break;
+					case ValueType::f64:
+						rval = (int64_t)std::get<double>(v);
+						break;
+				}
+				this->push(rval);
+				return true;
+
 			}
-	
+
 	};
 	return std::visit(visitor,instr);
 }

@@ -309,6 +309,24 @@ std::string to_string(Instruction i) {
 			out += i.is_signed ? "s" : "u";
 			return out;
 		},
+		[](ReinterpretBits& rb) {
+			std::string out = "";
+			switch(rb.from) {
+				case ValueType::i32:
+					out = "i32.reinterpret_f32";
+					break;
+				case ValueType::i64:
+					out = "i64.reinterpret_f64";
+					break;
+				case ValueType::f32:
+					out = "f32.reinterpret_i32";
+					break;
+				case ValueType::f64:
+					out = "f64.reinterpret_i64";
+					break;
+			}
+			return out;
+		}
 	};
 
 	return std::visit(visitor,i);
