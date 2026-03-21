@@ -58,6 +58,7 @@ class InvalidIndex: public std::exception {
 		/// Where did we try to index into
 		enum IndexFor {
 			Local,
+			Global
 		};
 
 		InvalidIndex(std::string& msg): message(msg) {};
@@ -66,6 +67,14 @@ class InvalidIndex: public std::exception {
 		InvalidIndex(IndexFor ifor,size_t index,size_t max);
 		InvalidIndex(IndexFor ifor,size_t index,size_t min, size_t max);
 		const char* what() const noexcept; 
+};
+
+class MutabilityError: public std::exception{
+	private:
+		std::string message;
+	public: 
+		MutabilityError(std::string& msg): message(msg) {};
+		const char* what() const noexcept;
 };
 
 class VMError: public std::exception {

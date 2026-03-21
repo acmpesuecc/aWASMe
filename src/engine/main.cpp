@@ -3,6 +3,7 @@
   */
 
 #include<iostream>
+
 #include "engine/vm.hpp"
 #include "engine/errors.hpp"
 
@@ -31,31 +32,30 @@ int main() {
 
 
 	std::vector<Instruction> program = { 
-		Unreachable{},
 		LoadConst{opt},
 		LoadConst{to_add},
-		Cmp{Cmp::Kind::Eq, ValueType::i32},
+		IntCmp{IntCmp::Kind::Eq, IntType::i32},
 		Scope{.kind = Scope::Kind::If,.info = BlockInfo{3,8,ValueType::i32}, .else_info = std::nullopt, .if_else_end = std::nullopt},
-			LoadConst{b},	
-			LoadConst{a},
+			LoadConst{a},	
+			LoadConst{b},
 			FloatArithmetic{FloatArithmetic::Kind::Add, FloatType::f32},
 			Unreachable{},
 		End{},
 		LoadConst{opt},
 		LoadConst{to_sub},
-		Cmp{Cmp::Kind::Eq, ValueType::i32},
+		IntCmp{IntCmp::Kind::Eq, IntType::i32},
 		Scope{.kind = Scope::Kind::If,.info = BlockInfo{12,17,ValueType::i32}, .else_info = std::nullopt, .if_else_end = std::nullopt},
-			LoadConst{b},	
-			LoadConst{a},
+			LoadConst{a},	
+			LoadConst{b},
 			FloatArithmetic{FloatArithmetic::Kind::Sub, FloatType::f32},
 			Unreachable{},
 		End{},
 		LoadConst{opt},
 		LoadConst{to_mul},
-		Cmp{Cmp::Kind::Eq, ValueType::i32},
+		IntCmp{IntCmp::Kind::Eq, IntType::i32},
 		Scope{.kind = Scope::Kind::If,.info = BlockInfo{21,26,ValueType::i32}, .else_info = std::nullopt, .if_else_end = std::nullopt},
-			LoadConst{b},	
-			LoadConst{a},
+			LoadConst{a},	
+			LoadConst{b},
 			FloatArithmetic{FloatArithmetic::Kind::Mul, FloatType::f32},
 			Unreachable{},
 		End{}
