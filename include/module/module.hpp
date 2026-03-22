@@ -3,6 +3,7 @@
 #include<cstdint>
 #include<optional>
 #include "instruction.hpp"
+#include "types.hpp"
 
 //Local variable data for function data structure
 struct LocalData
@@ -35,20 +36,28 @@ struct Function
 		funcCode = std::vector<Instruction>();
 	}
 };
+//GLOBAL STRUCT
+struct Global
+{
+	Type type;
+	bool mut;
+	InstrKind opcode;//redundent 
+	uint32_t value;
 
-
+};
 //Module = data being sent to the engine
 class Module 
 {
     public:
 		std::size_t filesize;
 		std::vector<Function> functions;      
-		std::optional<uint32_t> start_function;		
+		std::optional<uint32_t> start_function;	
+		std::vector<Global> globals;
 		/* 
 		Will implement these in the future
 			std::vector<Memory> memories;         
 			std::vector<Export> exports;          
-			std::vector<Global> globals;
+			
 		*/
 
 		//Constructors

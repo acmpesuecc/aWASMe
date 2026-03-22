@@ -1,0 +1,203 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\include\\module\\module.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:include\\module\\module.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\src\\engine\\value.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\engine\\value.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\src\\engine\\instruction.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\engine\\instruction.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\src\\engine\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\engine\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\src\\engine\\vm.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\engine\\vm.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\src\\parser\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\parser\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\src\\parser\\parser.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\parser\\parser.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\include\\module\\types.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:include\\module\\types.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\include\\parser\\parser.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:include\\parser\\parser.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\include\\module\\value.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:include\\module\\value.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\include\\module\\instruction.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:include\\module\\instruction.hpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 8,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "value.cpp",
+              "DocumentMoniker": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\src\\engine\\value.cpp",
+              "RelativeDocumentMoniker": "src\\engine\\value.cpp",
+              "ToolTip": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\src\\engine\\value.cpp",
+              "RelativeToolTip": "src\\engine\\value.cpp",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2026-03-21T11:34:27.664Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "instruction.cpp",
+              "DocumentMoniker": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\src\\engine\\instruction.cpp",
+              "RelativeDocumentMoniker": "src\\engine\\instruction.cpp",
+              "ToolTip": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\src\\engine\\instruction.cpp",
+              "RelativeToolTip": "src\\engine\\instruction.cpp",
+              "ViewState": "AgIAAAYBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2026-03-21T11:34:23.544Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "main.cpp",
+              "DocumentMoniker": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\src\\engine\\main.cpp",
+              "RelativeDocumentMoniker": "src\\engine\\main.cpp",
+              "ToolTip": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\src\\engine\\main.cpp",
+              "RelativeToolTip": "src\\engine\\main.cpp",
+              "ViewState": "AgIAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2026-03-21T11:34:12.128Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "vm.cpp",
+              "DocumentMoniker": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\src\\engine\\vm.cpp",
+              "RelativeDocumentMoniker": "src\\engine\\vm.cpp",
+              "ToolTip": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\src\\engine\\vm.cpp",
+              "RelativeToolTip": "src\\engine\\vm.cpp",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2026-03-21T11:34:09.879Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "main.cpp",
+              "DocumentMoniker": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\src\\parser\\main.cpp",
+              "RelativeDocumentMoniker": "src\\parser\\main.cpp",
+              "ToolTip": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\src\\parser\\main.cpp",
+              "RelativeToolTip": "src\\parser\\main.cpp",
+              "ViewState": "AgIAAE4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2026-03-21T11:33:48.897Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "types.hpp",
+              "DocumentMoniker": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\include\\module\\types.hpp",
+              "RelativeDocumentMoniker": "include\\module\\types.hpp",
+              "ToolTip": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\include\\module\\types.hpp",
+              "RelativeToolTip": "include\\module\\types.hpp",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAUAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2026-03-20T04:53:30.499Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "instruction.hpp",
+              "DocumentMoniker": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\include\\module\\instruction.hpp",
+              "RelativeDocumentMoniker": "include\\module\\instruction.hpp",
+              "ToolTip": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\include\\module\\instruction.hpp",
+              "RelativeToolTip": "include\\module\\instruction.hpp",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2026-03-20T04:50:41.662Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "value.hpp",
+              "DocumentMoniker": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\include\\module\\value.hpp",
+              "RelativeDocumentMoniker": "include\\module\\value.hpp",
+              "ToolTip": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\include\\module\\value.hpp",
+              "RelativeToolTip": "include\\module\\value.hpp",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2026-03-20T04:50:37.948Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "module.hpp",
+              "DocumentMoniker": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\include\\module\\module.hpp",
+              "RelativeDocumentMoniker": "include\\module\\module.hpp",
+              "ToolTip": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\include\\module\\module.hpp",
+              "RelativeToolTip": "include\\module\\module.hpp",
+              "ViewState": "AgIAAC0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2026-03-20T04:42:21.835Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "parser.hpp",
+              "DocumentMoniker": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\include\\parser\\parser.hpp",
+              "RelativeDocumentMoniker": "include\\parser\\parser.hpp",
+              "ToolTip": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\include\\parser\\parser.hpp",
+              "RelativeToolTip": "include\\parser\\parser.hpp",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2026-03-20T04:39:00.493Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "parser.cpp",
+              "DocumentMoniker": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\src\\parser\\parser.cpp",
+              "RelativeDocumentMoniker": "src\\parser\\parser.cpp",
+              "ToolTip": "C:\\Projects\\C\u002B\u002B\\aWASMe\\aWASMe2.0\\aWASMe\\src\\parser\\parser.cpp",
+              "RelativeToolTip": "src\\parser\\parser.cpp",
+              "ViewState": "AgIAALkDAAAAAAAAAAAAAGECAAAQAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2026-03-20T04:38:36.251Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

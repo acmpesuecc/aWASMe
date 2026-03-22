@@ -292,16 +292,24 @@ void parse_global_section(std::span<const uint8_t>data,Module& module)
 	std::cout<<"Number of globals are: "<<globalCount<<std::endl;
 	for(uint32_t i=0;i<globalCount;i++)
 	{
+		Global global;
 		Type gType = static_cast<Type>(data[offset++]);
 		std::cout<<"Type is: "<<(gType== Type::I32? " i32\n":" Other\n");
-		bool mut =data[offset++];
-		std::cout<<"mut: "<<mut<<std::endl;
+		if (gType != Type::NONE)
+			global.type = gType;
+		global.mut =data[offset++];
+		std::cout<<"mut: "<<global.mut<<std::endl;
 		Type type = static_cast<Type>(data[offset++]); //Use InstrKind for this 
-		std::cout<<"opcode is : "<<(type == Type::I32_const? " i32.const\n":" Other\n");
-		size_t value = leb128_decode(data , secSize,offset); 
-		std::cout<<"Value is : "<<value<<std::endl;
+		if(type!= Type::NONE)
+			global.opcode = static_cast<InstrKind>(type);
+		print_string_of_opcode(global.opcode);
+		global.value = leb128_decode(data , secSize,offset); 
+		std::cout<<"Value is : "<<global.value<<std::endl;
 		offset++;
-	}
+		module.globals.push_back(global);
+	}	
+	if(module.globals.size()==globalCount)
+	std::cout<<"Section Validated"<<std::endl;
 }
 void parse_mem_section(std::span<const uint8_t>data,Module& module)
 {
@@ -490,7 +498,7 @@ void parse_data_section(std::span<const uint8_t>data,Module& module)
 			size_t memIND=leb128_decode(data,secSize,offset);
 			uint8_t offsetO=data[offset++];
 			Type opcode = static_cast<Type>(offsetO);
-			std::cout<<"OPCODE"<<(opcode==Type::I32_const?" i32.const\n": " Other\n");
+			
 			size_t offsetVal=leb128_decode(data,secSize,offset);
 			offset++;//skipping END Byte
 			byteCount=leb128_decode(data,secSize,offset);

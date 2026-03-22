@@ -1,0 +1,14 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\include",
+    "\\include\\engine",
+    "\\include\\module",
+    "\\include\\parser",
+    "\\src",
+    "\\src\\engine",
+    "\\src\\parser"
+  ],
+  "SelectedNode": "\\include\\module\\module.hpp",
+  "PreviewInSolutionExplorer": false
+}
