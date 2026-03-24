@@ -83,7 +83,7 @@ struct UnaryFloat {
 	enum class Kind {
 		Abs,
 		Neg,
-		Ciel,
+		Ceil,
 		Floor,
 		Trunc,
 		Nearest,

@@ -1,5 +1,5 @@
 /* To execute: 
-	g++ -std=c++20 -I./include src/parser/main.cpp src/parser/parser.cpp -o parser.exe
+	g++ -std=c++20 -I./include src/parser/main.cpp src/parser/parser.cpp src/parser/codeparsing.cpp -o parser.exe
 	./parser.exe "<path to .wasm file>"
 
 	(or)

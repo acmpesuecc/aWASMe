@@ -7,17 +7,17 @@
 //Local variable data for function data structure
 struct LocalData
 { 
-	int i32_count; //only storing count here because the locals are initialized in the function code which the engine has to run
-	int i64_count;
-	int f32_count;
-	int f64_count;  
+	int i32; //only storing count here because the locals are initialized in the function code which the engine has to run
+	int i64;
+	int f32;
+	int f64;  
 	
 	LocalData() 
 	{
-		i32_count = 0;
-		i64_count = 0;
-		f32_count = 0;
-		f64_count = 0;
+		i32 = 0;
+		i64 = 0;
+		f32 = 0;
+		f64 = 0;
 	}
 };
 
@@ -25,14 +25,14 @@ struct LocalData
 struct Function
 {
     uint8_t typeIndex;
-	struct LocalData localData;
-    std::vector<Instruction> funcCode; 
+	struct LocalData localCounts;
+    std::vector<Instruction> code; 
 
 	Function()
 	{
 		//we will read the function section to get the type index and initialize the typeIndex value then
-		localData = LocalData();
-		funcCode = std::vector<Instruction>();
+		localCounts = LocalData();
+		code = std::vector<Instruction>();
 	}
 };
 
@@ -56,6 +56,6 @@ class Module
 		{
 			filesize = s;
 			functions = std::vector<Function>();
-			//not sure how to assign start_function - what value should it take when the start_function is undefined?
+			start_function = std::nullopt;
 		}
 };
