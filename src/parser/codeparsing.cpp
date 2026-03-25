@@ -2,10 +2,9 @@
 #include<utility> //for std::pair<>
 #include "parser/codeparsing.hpp"
 
-std::vector<Instruction> parse_code(std::span<const uint8_t> data) 
+std::vector<Instruction> parse_code(std::span<const uint8_t> data, size_t& offset) 
 {
 	size_t codeSize = data.size();
-	size_t offset = 0;
 
 	Instr opcode;
 	InstrCategory category;
@@ -102,9 +101,9 @@ std::vector<Instruction> parse_code(std::span<const uint8_t> data)
 				instructions.push_back(End{});
                 if (scope_stack.empty()) 
                 {
-                    //assuming the code is valid, this means we've reached the end of the block of the code. 
-                    //At this point, offset should be = codeSize, so the loop will stop running after this
-                    break; 
+                    //assuming the code is valid, this means we've reached the end of the entire block of the code. 
+                    //Hence, return instruction vector.
+                    return instructions;
                 }
                 else 
                 {

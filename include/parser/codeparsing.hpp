@@ -194,7 +194,7 @@ inline std::unordered_map<Instr, InstrCategory> Instr_to_Category =
 };
 
 //Parsing functions
-std::vector<Instruction> parse_code(std::span<const uint8_t> data);
+std::vector<Instruction> parse_code(std::span<const uint8_t> data, size_t& offset);
 Instruction parse_IntArithmetic(Instr opcode);
 Instruction parse_FloatArithmetic(Instr opcode);
 Instruction parse_UnaryInt(Instr opcode);

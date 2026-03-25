@@ -8,8 +8,8 @@
 #include "parser/parser.hpp" 
 
 //Section parsing
-void parse_code_section(std::span<const uint8_t> data, Module& module) {
-
+void parse_code_section(std::span<const uint8_t> data, Module& module) 
+{
 	size_t secSize = data.size();
 	size_t offset = 0;
 	size_t num_funcs = leb128_decode(data, secSize, offset);
@@ -20,30 +20,31 @@ void parse_code_section(std::span<const uint8_t> data, Module& module) {
 		size_t endOfBody = offset + bodySize;
 		size_t numlocals = leb128_decode(data, secSize, offset);
 
-		Function* current_func = &module.functions[i];
+		Module::Function* current_func = &module.functions[i];
 
 		while (numlocals)
 		{
 			size_t numlocals_specifictype = leb128_decode(data, secSize, offset);
 			numlocals -= numlocals_specifictype;
-			Type type = static_cast<Type>(data[offset]);
-			switch (type) {
-				case Type::I32: 
+			ValueType type = static_cast<ValueType>(data[offset]);
+			switch (type) 
+			{
+				case ValueType::i32: 
 				{
 					current_func->localCounts.i32 = numlocals_specifictype;
 					break;
 				}
-				case Type::I64: 
+				case ValueType::i64: 
 				{
 					current_func->localCounts.i64 = numlocals_specifictype;
 					break;
 				}
-				case Type::F32: 
+				case ValueType::f32: 
 				{
 					current_func->localCounts.f32 = numlocals_specifictype;
 					break;
 				}
-				case Type::F64: 
+				case ValueType::f64: 
 				{
 					current_func->localCounts.f64 = numlocals_specifictype;
 					break;
@@ -57,103 +58,185 @@ void parse_code_section(std::span<const uint8_t> data, Module& module) {
 			++offset; //advance offset 
 		}
 
-		size_t codeSize = endOfBody - offset;
-		std::span<const uint8_t> code = data.subspan(offset, codeSize);
-		current_func->code = parse_code(code);
+		current_func->code = parse_code(data, offset);
 	}
 }
 
-//TYPE SECTION ID=1
-void parse_type_section(std::span<const uint8_t> data, Module& module)
+//Type section (ID 1)
+void parse_type_section(std::span<const uint8_t> data, Module& module) //currently only supports function signature types
 {
-	size_t secSize=data.size(); // size of the func
-	size_t offset =0;
-	uint32_t funcCount= leb128_decode(data,secSize,offset);
-	std::cout<<"FUNCTION COUNT:"<<funcCount<<std::endl;
-	while(offset<secSize)
+	size_t secSize = data.size();
+	size_t offset = 0;
+	uint32_t typeCount = leb128_decode(data,secSize,offset);
+	std::cout << "TYPE COUNT: " << typeCount << std::endl;
+	Module::Type type_data;
+
+
+	while (offset < secSize)
 	{
-		if(data[offset++]!=0x60)
+		if (data[offset++] != 0x60)
 		{
-			std::cout<<"Type tag mismacthed";
+			std::cout << "Type tag not supported (expected 0x60, i.e. function signature)" << std::endl;
 			return;
 		}
-		uint32_t pramCount=leb128_decode(data,secSize,offset);
-		std::cout<<"Parameter count"<<pramCount<<std::endl;
-		for(uint32_t i=0;i<pramCount;i++)
+
+		size_t pramCount = leb128_decode(data, secSize, offset);
+		std::cout << "Parameter count: " << pramCount << std::endl;
+		for(size_t i = 0; i < pramCount; i++)
 		{
-			Type pType = static_cast<Type>(data[offset++]); ;
-			std::cout<<"PARAMETER TYPE OF "<<i<<(pType== Type::I32? " i32":" Other")<<std::endl;
+			ValueType pType = static_cast<ValueType>(data[offset++]);
+			type_data.params.push_back(pType);
 		}
-		uint32_t returnCount =leb128_decode(data,secSize,offset);
-		std::cout<<"Return count"<<returnCount<<std::endl;
-		for(uint32_t i=0;i<returnCount;i++)
+
+		size_t returnCount = leb128_decode(data, secSize, offset);
+		std::cout << "Return count: " << returnCount << std::endl;
+		for (size_t i=0; i < returnCount; i++)
 		{
-			Type rType = static_cast<Type>(data[offset++]);
-			std::cout<<"RETURN TYPE OF "<<i<<(rType== Type::I32? " i32":" Other")<<std::endl;
+			ValueType rType = static_cast<ValueType>(data[offset++]);
+			type_data.params.push_back(rType);
 		}
+
+		module.types.push_back(type_data);
+	}
+
+	if (module.types.size() == typeCount) 
+	{
+		std::cout << "Type section parsed successfully - " << typeCount << " types decoded" << std::endl;
+	}
+	else 
+	{
+		std::cout << "Error parsing type section, only " << module.types.size() << " types pushed into module object successfully" << std::endl;
 	}
 }
-void parse_func_section(std::span<const uint8_t>data, Module &module)
+
+void parse_func_section(std::span<const uint8_t> data, Module& module)
 {
-	size_t secSize =data.size();
-	size_t offset =0;
-	size_t funcCount=leb128_decode(data,secSize,offset);
-	std::cout<<"Number of functions:"<<funcCount<<std::endl;
+	size_t secSize = data.size();
+	size_t offset = 0;
+	size_t funcCount = leb128_decode(data,secSize,offset);
+	std::cout << "Number of functions: " << funcCount << std::endl;
 	int i = 0;
+
 	while(offset<secSize)
 	{
 		size_t index = leb128_decode(data,secSize,offset);
-		std::cout<<"The function at index "<<i<<" uses the signature at index "<<index<<std::endl;
-		Function func{};
+		std::cout << "The function at index " << i << " uses the signature at index " << index << std::endl;
+		Module::Function func{};
 		func.typeIndex = index;
 		module.functions.push_back(func);
 		i++;
 	}
 
-	
-}
-void parse_start_section(std::span<const uint8_t>data, Module &module)
-{
-	size_t secSize =data.size();
-	size_t offset =0;
-	size_t start_index =leb128_decode(data,secSize,offset);
-	std::cout<<"Index of start function is: "<<start_index<<std::endl;
-}
-void parse_global_section(std::span<const uint8_t>data,Module& module)
-{
-	size_t secSize =data.size();
-	size_t offset=0;
-	size_t globalCount =leb128_decode(data,secSize,offset);
-	std::cout<<"Number of globals are: "<<globalCount<<std::endl;
-	for(uint32_t i=0;i<globalCount;i++)
+	if (module.functions.size() == funcCount)
 	{
-		Type gType = static_cast<Type>(data[offset++]);
-		std::cout<<"Type is: "<<(gType== Type::I32? " i32\n":" Other\n");
-		bool mut =data[offset++];
-		std::cout<<"mut: "<<mut<<std::endl;
-		Type type = static_cast<Type>(data[offset++]); //Use Instr for this 
-		std::cout<<"opcode is : "<<(type == Type::I32_const? " i32.const\n":" Other\n");
-		size_t value = leb128_decode(data , secSize,offset); 
-		std::cout<<"Value is : "<<value<<std::endl;
-		offset++;
+		std::cout << "Function section parsed successfully - " << funcCount << " functions decoded" << std::endl;
+	}
+	else 
+	{
+		std::cout << "Error while parsing function section, only " << module.functions.size() << " functions pushed to module object" << std::endl;
+	}
+
+}
+
+void parse_start_section(std::span<const uint8_t>data, Module& module)
+{
+	size_t secSize = data.size();
+	size_t offset = 0;
+	size_t start_index = leb128_decode(data, secSize, offset);
+	std::cout << "Index of start function is: " << start_index <<std::endl;
+	module.start_function = start_index;
+}
+
+void parse_global_section(std::span<const uint8_t> data, Module& module)
+{
+	size_t secSize = data.size();
+	size_t offset = 0;
+	size_t globalCount = leb128_decode(data, secSize, offset);
+
+	Module::Global global{};
+
+	for (size_t i = 0; i < globalCount; i++)
+	{
+		ValueType gType = static_cast<ValueType>(data[offset++]);
+		global.type = gType;
+		bool mut = data[offset++];
+		global.is_mutable = mut;
+		global.initCode = parse_code(data, offset);
+		module.globals.push_back(global);
+	}
+
+	if (module.globals.size() == globalCount)
+	{
+		std::cout << "Global section parsed successfully - " << globalCount << " globals decoded" << std::endl;
+	}
+	else
+	{
+		std::cout << "Error while parsing global section, only " << module.globals.size() << " globals pushed to module object" << std::endl;
 	}
 }
-void parse_mem_section(std::span<const uint8_t>data,Module& module)
+
+void parse_mem_section(std::span<const uint8_t> data, Module& module)
 {
-	size_t secSize=data.size();
-	size_t offset=0;
-	size_t MemCount = leb128_decode(data,secSize,offset);
-	bool hasMax =data[offset++];
-	size_t min = leb128_decode(data,secSize,offset);
-	size_t max;
-	std::cout<<"Min: "<<min<<std::endl;
-	if(hasMax)
+	size_t secSize = data.size();
+	size_t offset = 0;
+	size_t MemCount = leb128_decode(data, secSize, offset);
+
+	Module::Memory memory{};
+	uint8_t mem_type;
+
+	for (size_t i = 0; i < MemCount; i++)
 	{
-		max= leb128_decode(data,secSize,offset);
-		std::cout<<"Max: "<<max<<std::endl;
+		mem_type = data[offset++]; //flags - bit 2 defines address type, bit 0 defines whether max limit exists
+		switch (mem_type)
+		{
+			case 0x00: //i32 address, no max limit
+			{
+				memory.address_type = IntType::i32;
+				memory.start_page = leb128_decode(data, secSize, offset);
+				memory.end_page = std::nullopt;
+				break;
+			}
+			case 0x01: //i32 address, max limit exists
+			{
+				memory.address_type = IntType::i32;
+				memory.start_page = leb128_decode(data, secSize, offset);
+				memory.end_page = leb128_decode(data, secSize, offset);
+				break;
+			}
+			case 0x04: //i64 address, no max limit
+			{
+				memory.address_type = IntType::i64;
+				memory.start_page = leb128_decode(data, secSize, offset);
+				memory.end_page = std::nullopt;
+				break;
+			}
+			case 0x05: //i64 address, max limit exists
+			{
+				memory.address_type = IntType::i64;
+				memory.start_page = leb128_decode(data, secSize, offset);
+				memory.end_page = leb128_decode(data, secSize, offset);
+				break;
+			}
+			default: 
+			{
+				std::cout << "Error while parsing memory section - invalid memory flags. Flags given were (displayed in hex format): " << std::hex << mem_type << std::endl;
+				return;
+			}
+		}
+
+		module.memories.push_back(memory);
 	}
 	
+	if (module.memories.size() == MemCount)
+	{
+		std::cout << "Memory section parsed successfully - " << MemCount << " memories decoded" << std::endl;
+	}
+	else
+	{
+		std::cout << "Error while parsing memory section, only " << module.memories.size() << " memories pushed into module object" << std::endl;
+	}
 }
+
 void parse_table_section(std::span<const uint8_t>data,Module& module)
 {
 	size_t secSize =data.size();
@@ -228,8 +311,8 @@ void parse_import_section(std::span<const uint8_t>data, Module& module)
 			case 0x03:
 			{
 				std::cout<<"Gloabal"<<std::endl;
-				Type gType = static_cast<Type>(data[offset++]);
-				std::cout<<"Type is: "<<(gType== Type::I32? " i32\n":" Other\n");
+				ValueType gType = static_cast<ValueType>(data[offset++]);
+				std::cout<<"Type is: "<<(gType== ValueType::i32? " i32\n":" Other\n");
 				bool mut =data[offset++];
 				std::cout<<"mut: "<<mut<<std::endl;
 				break;
@@ -257,8 +340,8 @@ void parse_element_section(std::span<const uint8_t>data,Module& module)
 			case Flag::ActiveImplicitExpr:
 			{
 				uint8_t offsetO=data[offset++];
-				Type opcode = static_cast<Type>(offsetO);
-				std::cout<<"OPCODE"<<(opcode==Type::I32_const?" i32.const\n": " Other\n");
+				Instr opcode = static_cast<Instr>(offsetO);
+				std::cout<<"OPCODE"<<(opcode==Instr::I32_CONST?" i32.const\n": " Other\n");
 				size_t offsetVal=leb128_decode(data,secSize,offset);
 				offset++;//skipping END Byte
 				size_t eleCount =leb128_decode(data,secSize,offset);
@@ -276,8 +359,8 @@ void parse_element_section(std::span<const uint8_t>data,Module& module)
 			{
 				size_t tableIND=leb128_decode(data,secSize,offset);
 				uint8_t offsetO=data[offset++];
-				Type opcode = static_cast<Type>(offsetO);
-				std::cout<<"OPCODE"<<(opcode==Type::I32_const?"i32.const\n": "Other\n");
+				Instr opcode = static_cast<Instr>(offsetO);
+				std::cout<<"OPCODE"<<(opcode==Instr::I32_CONST?"i32.const\n": "Other\n");
 				offset++;//skipping END Byte
 				uint8_t eleKind = data[offset++];//always 0x00
 				std::cout<<"Element kind: "<<(eleKind ==0x00 ?"FuncRef" :"NONE");
@@ -310,7 +393,7 @@ void parse_element_section(std::span<const uint8_t>data,Module& module)
 	}
 }
 
-void parse_data_section(std::span<const uint8_t>data,Module& module)
+void parse_data_section(std::span<const uint8_t>data, Module& module)
 {
 	size_t secSize = data.size();
 	size_t offset = 0;
@@ -324,8 +407,8 @@ void parse_data_section(std::span<const uint8_t>data,Module& module)
 			if(flag==Flag::ActiveExplicit)
 			size_t memIND=leb128_decode(data,secSize,offset);
 			uint8_t offsetO=data[offset++];
-			Type opcode = static_cast<Type>(offsetO);
-			std::cout<<"OPCODE"<<(opcode==Type::I32_const?" i32.const\n": " Other\n");
+			Instr opcode = static_cast<Instr>(offsetO);
+			std::cout<<"OPCODE"<<(opcode==Instr::I32_CONST?" i32.const\n": " Other\n");
 			size_t offsetVal=leb128_decode(data,secSize,offset);
 			offset++;//skipping END Byte
 			byteCount=leb128_decode(data,secSize,offset);
@@ -372,7 +455,7 @@ std::vector<uint8_t> Loadfile(std::string Path)
     if ( !(data[0] == 0x00 && data[1] == 0x61 && data[2] == 0x73 && data[3] == 0x6D
 		&& data[4] == 0x01 && data[5] == 0x00 && data[6] == 0x00 && data[7] == 0x00) )
     {
-		return std::vector<uint8_t>(); //if incorrect file type, return empty vector (empty data vector = error opening file)
+		return std::vector<uint8_t>{}; //if incorrect file type, return empty vector (empty data vector = error opening file)
     }
 
 	return data; //otherwise return data

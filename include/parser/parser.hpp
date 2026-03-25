@@ -4,40 +4,7 @@
 #include<unordered_map>
 #include "module/module.hpp"
 #include "parser/codeparsing.hpp"
-
-//mapping for TYPE SECTION 
-enum class Type : uint8_t {
-    I32 		= 0x7F,
-    I64 		= 0x7E,
-    F32 		= 0x7D,
-    F64 		= 0x7C,
-    I32_const 	= 0x41,
-    I64_const 	= 0x42,
-    F32_const 	= 0x43,
-    F64_const 	= 0x44,
-    Global_get 	= 0x23,
-    NONE
-};
-
-enum class Flag : uint8_t
-{
-    ActiveImplicit          = 0x00,  // active, table 0, func indices
-    Passive                 = 0x01,  // passive, func indices
-    ActiveExplicit          = 0x02,  // active, explicit table, func indices
-    Declarative             = 0x03,  // declarative, func indices
-    ActiveImplicitExpr      = 0x04,  // active, table 0, expressions
-    PassiveExpr             = 0x05,  // passive, expressions
-    ActiveExplicitExpr      = 0x06,  // active, explicit table, expressions
-    DeclarativeExpr         = 0x07,  // declarative, expressions
-};
-
-enum class Tag : uint8_t
-{
-       Function     = 0x00,
-       Table        = 0x01,
-       Memory       = 0x02,
-       Global       = 0x03, 
-};
+#include "parser/types.hpp"
 
 //Section parsing 
 void parse_code_section(std::span<const uint8_t> data, Module& module);
