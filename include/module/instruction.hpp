@@ -2,6 +2,7 @@
 #define INSTRUCTION_HPP
 
 #include <optional>
+#include <cstdint>
 
 #include "module/value.hpp"
 
@@ -248,6 +249,59 @@ struct ReinterpretBits {
 	ValueType from;
 };
 
+// Grow default linear memory by n pages of 64 Kib each.
+struct MemoryGrow {};
+
+// Get current size (in pages)
+struct MemorySize {};
+
+// Load from linear memory
+struct MemoryLoad {
+	enum class Kind {
+		I32Load,
+		I64Load,
+		F32Load,
+		F64Load,
+		I32Load8S,
+		I32Load8U,
+		I32Load16S,
+		I32Load16U,
+		I64Load8S,
+		I64Load8U,
+		I64Load16S,
+		I64Load16U,
+		I64Load32S,
+		I64Load32U,
+	};
+
+	Kind kind;
+	uint32_t offset;
+};
+
+// Store to linear memory
+struct MemoryStore {
+	enum class Kind {
+		I32Store,
+		I64Store,
+		F32Store,
+		F64Store,
+		I32Store8,
+		I32Store16,
+		I64Store8,
+		I64Store16,
+		I64Store32,
+	};
+
+	Kind kind;
+	uint32_t offset;
+};
+
+// Fill linear memory with a byte value
+struct MemoryFill {};
+
+// Copy bytes within linear memory
+struct MemoryCopy {};
+
 template<class... Ts>
 struct overloads : Ts... { using Ts::operator()...; };
 
@@ -278,7 +332,13 @@ using Instruction = std::variant<
 	FloatConverters,
 	FloatToIntTrunc,
 	IntToFloat,
-	ReinterpretBits
+	ReinterpretBits,
+	MemoryGrow,
+	MemorySize,
+	MemoryLoad,
+	MemoryStore,
+	MemoryFill,
+	MemoryCopy
 >;
 
 std::string to_string(Instruction i);

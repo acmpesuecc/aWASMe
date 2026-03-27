@@ -4,9 +4,33 @@
 #include<bit>
 #include<type_traits>
 #include<optional>
+#include<cstring>
 
 #include "engine/vm.hpp"
 #include "engine/errors.hpp"
+
+// Load a scalar value of type T from linear memory at the given byte address.
+// Bound-checks and interprets bytes as little-endian.
+template <typename T>
+static T load_scalar(const std::vector<uint8_t>& memory, uint64_t addr) {
+	constexpr size_t width = sizeof(T);
+	if (addr + width > memory.size()) {
+		throw std::runtime_error("Out of bounds memory access");
+	}
+	T value;
+	std::memcpy(&value, memory.data() + addr, width);
+	return value;
+}
+
+// same occurs here aswell except it stores a scalar value
+template <typename T>
+static void store_scalar(std::vector<uint8_t>& memory, uint64_t addr, T value) {
+	constexpr size_t width = sizeof(T);
+	if (addr + width > memory.size()) {
+		throw std::runtime_error("Out of bounds memory access");
+	}
+	std::memcpy(memory.data() + addr, &value, width);
+}
 
 bool ControlFrame::is_block() {
 	return std::holds_alternative<Block>(this->inner);
@@ -53,6 +77,7 @@ size_t ControlFrame::get_end() {
 
 VM::VM() {
 	this->stack = {};
+	this->memory = std::vector<uint8_t>(PAGE_SIZE, 0u);
 }
 
 void VM::push(Value v) {
@@ -791,6 +816,287 @@ bool VM::run_instr(const Instruction& instr) {
 				Value v = this->pop_type_or_error(from_type);
 				Value res = std::visit(IntToFloatVisitor{itf.to,itf.is_signed},v);
 				this->push(res);
+				return true;
+			},
+			[&](const MemoryFill&) {
+				int32_t len32  = std::get<int32_t>(this->pop_type_or_error(ValueType::i32));
+				int32_t val32  = std::get<int32_t>(this->pop_type_or_error(ValueType::i32));
+				int32_t dest32 = std::get<int32_t>(this->pop_type_or_error(ValueType::i32));
+
+				if (len32 < 0 || dest32 < 0) {
+					throw std::runtime_error("Error: Negative length or memory address");
+				}
+				if (val32 < 0 || val32 > 255) {
+					throw std::runtime_error("Error: memory.fill byte value out of range");
+				}
+
+				uint32_t len  = static_cast<uint32_t>(len32);
+				uint32_t dest = static_cast<uint32_t>(dest32);
+				uint8_t byte  = static_cast<uint8_t>(val32);
+
+				uint64_t end = static_cast<uint64_t>(dest) + static_cast<uint64_t>(len);
+				if (end > this->memory.size()) {
+					throw std::runtime_error("Error: memory.fill out of bounds");
+				}
+				if (len > 0) {
+					std::memset(this->memory.data() + dest, byte, len);
+				}
+				return true;
+			},
+			[&](const MemoryCopy&) {
+				int32_t len32  = std::get<int32_t>(this->pop_type_or_error(ValueType::i32));
+				int32_t src32  = std::get<int32_t>(this->pop_type_or_error(ValueType::i32));
+				int32_t dest32 = std::get<int32_t>(this->pop_type_or_error(ValueType::i32));
+
+				if (len32 < 0 || src32 < 0 || dest32 < 0) {
+					throw std::runtime_error("Error: Negative length or memory address");
+				}
+
+				uint32_t len  = static_cast<uint32_t>(len32);
+				uint32_t src  = static_cast<uint32_t>(src32);
+				uint32_t dest = static_cast<uint32_t>(dest32);
+
+				uint64_t src_end  = static_cast<uint64_t>(src)  + static_cast<uint64_t>(len);
+				uint64_t dest_end = static_cast<uint64_t>(dest) + static_cast<uint64_t>(len);
+				if (src_end > this->memory.size() || dest_end > this->memory.size()) {
+					throw std::runtime_error("Error: memory.copy out of bounds");
+				}
+
+				if (len > 0) {
+					std::memmove(this->memory.data() + dest,
+							    this->memory.data() + src,
+							    len);
+				}
+				return true;
+			},
+			[&](const MemoryStore& ms) {
+				uint64_t addr;
+				switch (ms.kind) {
+					case MemoryStore::Kind::I32Store:
+					case MemoryStore::Kind::I32Store8:
+					case MemoryStore::Kind::I32Store16: {
+						Value val = this->pop_type_or_error(ValueType::i32);
+						Value addr_val = this->pop_type_or_error(ValueType::i32);
+						int32_t base = std::get<int32_t>(addr_val);
+						if (base < 0) {
+							throw std::runtime_error("Error: Negative memory address");
+						}
+						addr = static_cast<uint64_t>(static_cast<uint32_t>(base)) + ms.offset;
+
+						int32_t v = std::get<int32_t>(val);
+						switch (ms.kind) {
+							case MemoryStore::Kind::I32Store: {
+								uint32_t raw = static_cast<uint32_t>(v);
+								store_scalar<uint32_t>(this->memory, addr, raw);
+								break;
+							}
+							case MemoryStore::Kind::I32Store8: {
+								uint8_t raw = static_cast<uint8_t>(v);
+								store_scalar<uint8_t>(this->memory, addr, raw);
+								break;
+							}
+							case MemoryStore::Kind::I32Store16: {
+								uint16_t raw = static_cast<uint16_t>(v);
+								store_scalar<uint16_t>(this->memory, addr, raw);
+								break;
+							}
+							default:
+								break;
+						}
+						break;
+					}
+					case MemoryStore::Kind::I64Store:
+					case MemoryStore::Kind::I64Store8:
+					case MemoryStore::Kind::I64Store16:
+					case MemoryStore::Kind::I64Store32: {
+						Value val = this->pop_type_or_error(ValueType::i64);
+						Value addr_val = this->pop_type_or_error(ValueType::i32);
+						int32_t base = std::get<int32_t>(addr_val);
+						if (base < 0) {
+							throw std::runtime_error("Error: Negative memory address");
+						}
+						addr = static_cast<uint64_t>(static_cast<uint32_t>(base)) + ms.offset;
+
+						int64_t v = std::get<int64_t>(val);
+						switch (ms.kind) {
+							case MemoryStore::Kind::I64Store: {
+								uint64_t raw = static_cast<uint64_t>(v);
+								store_scalar<uint64_t>(this->memory, addr, raw);
+								break;
+							}
+							case MemoryStore::Kind::I64Store8: {
+								uint8_t raw = static_cast<uint8_t>(v);
+								store_scalar<uint8_t>(this->memory, addr, raw);
+								break;
+							}
+							case MemoryStore::Kind::I64Store16: {
+								uint16_t raw = static_cast<uint16_t>(v);
+								store_scalar<uint16_t>(this->memory, addr, raw);
+								break;
+							}
+							case MemoryStore::Kind::I64Store32: {
+								uint32_t raw = static_cast<uint32_t>(v);
+								store_scalar<uint32_t>(this->memory, addr, raw);
+								break;
+							}
+							default:
+								break;
+						}
+						break;
+					}
+					case MemoryStore::Kind::F32Store: {
+						Value val = this->pop_type_or_error(ValueType::f32);
+						Value addr_val = this->pop_type_or_error(ValueType::i32);
+						int32_t base = std::get<int32_t>(addr_val);
+						if (base < 0) {
+							throw std::runtime_error("Error: Negative memory address");
+						}
+						addr = static_cast<uint64_t>(static_cast<uint32_t>(base)) + ms.offset;
+						float v = std::get<float>(val);
+						store_scalar<float>(this->memory, addr, v);
+						break;
+					}
+					case MemoryStore::Kind::F64Store: {
+						Value val = this->pop_type_or_error(ValueType::f64);
+						Value addr_val = this->pop_type_or_error(ValueType::i32);
+						int32_t base = std::get<int32_t>(addr_val);
+						if (base < 0) {
+							throw std::runtime_error("Error: Negative memory address");
+						}
+						addr = static_cast<uint64_t>(static_cast<uint32_t>(base)) + ms.offset;
+						double v = std::get<double>(val);
+						store_scalar<double>(this->memory, addr, v);
+						break;
+					}
+				}
+				return true;
+			},
+			[&](const MemoryLoad& ml) {
+				// Pop base address (i32) and add the offset.
+				Value addr_val = this->pop_type_or_error(ValueType::i32);
+				int32_t base = std::get<int32_t>(addr_val);
+				if (base < 0) {
+					throw std::runtime_error("Negative memory address");
+				}
+				uint64_t addr = static_cast<uint64_t>(static_cast<uint32_t>(base)) + ml.offset;
+
+				switch (ml.kind) {
+					case MemoryLoad::Kind::I32Load: {
+						uint32_t raw = load_scalar<uint32_t>(this->memory, addr);
+						this->push(static_cast<int32_t>(raw));
+						break;
+					}
+					case MemoryLoad::Kind::I64Load: {
+						uint64_t raw = load_scalar<uint64_t>(this->memory, addr);
+						this->push(static_cast<int64_t>(raw));
+						break;
+					}
+					case MemoryLoad::Kind::F32Load: {
+						float v = load_scalar<float>(this->memory, addr);
+						this->push(v);
+						break;
+					}
+					case MemoryLoad::Kind::F64Load: {
+						double v = load_scalar<double>(this->memory, addr);
+						this->push(v);
+						break;
+					}
+					case MemoryLoad::Kind::I32Load8S: {
+						int8_t v = load_scalar<int8_t>(this->memory, addr);
+						this->push(static_cast<int32_t>(v));
+						break;
+					}
+					case MemoryLoad::Kind::I32Load8U: {
+						uint8_t v = load_scalar<uint8_t>(this->memory, addr);
+						this->push(static_cast<int32_t>(v));
+						break;
+					}
+					case MemoryLoad::Kind::I32Load16S: {
+						int16_t v = load_scalar<int16_t>(this->memory, addr);
+						this->push(static_cast<int32_t>(v));
+						break;
+					}
+					case MemoryLoad::Kind::I32Load16U: {
+						uint16_t v = load_scalar<uint16_t>(this->memory, addr);
+						this->push(static_cast<int32_t>(v));
+						break;
+					}
+					case MemoryLoad::Kind::I64Load8S: {
+						int8_t v = load_scalar<int8_t>(this->memory, addr);
+						this->push(static_cast<int64_t>(v));
+						break;
+					}
+					case MemoryLoad::Kind::I64Load8U: {
+						uint8_t v = load_scalar<uint8_t>(this->memory, addr);
+						this->push(static_cast<int64_t>(v));
+						break;
+					}
+					case MemoryLoad::Kind::I64Load16S: {
+						int16_t v = load_scalar<int16_t>(this->memory, addr);
+						this->push(static_cast<int64_t>(v));
+						break;
+					}
+					case MemoryLoad::Kind::I64Load16U: {
+						uint16_t v = load_scalar<uint16_t>(this->memory, addr);
+						this->push(static_cast<int64_t>(v));
+						break;
+					}
+					case MemoryLoad::Kind::I64Load32S: {
+						int32_t v = load_scalar<int32_t>(this->memory, addr);
+						this->push(static_cast<int64_t>(v));
+						break;
+					}
+					case MemoryLoad::Kind::I64Load32U: {
+						uint32_t v = load_scalar<uint32_t>(this->memory, addr);
+						this->push(static_cast<int64_t>(v));
+						break;
+					}
+				}
+				return true;
+			},
+			[&](const MemoryGrow&) {
+				// (i32 delta_pages), returns (i32 old_pages) or -1
+				Value delta_val = this->pop_type_or_error(ValueType::i32);
+				int32_t delta = std::get<int32_t>(delta_val);
+
+				if (delta < 0) {
+					this->push(int32_t(-1));
+					return true;
+				}
+
+				uint32_t delta_pages = static_cast<uint32_t>(delta);
+				size_t current_pages = this->memory.size() / PAGE_SIZE;
+				size_t old_pages = current_pages;
+
+				if (delta_pages == 0) {
+					this->push(static_cast<int32_t>(old_pages));
+					return true;
+				}
+
+				// Check against maximum and avoid overflow
+				if (current_pages > this->max_memory_pages ||
+				    delta_pages > this->max_memory_pages - current_pages) {
+					this->push(int32_t(-1));
+					return true;
+				}
+
+				size_t new_pages = current_pages + static_cast<size_t>(delta_pages);
+				size_t new_size_bytes = new_pages * PAGE_SIZE;
+
+				try {
+					this->memory.resize(new_size_bytes, 0u);
+				} catch (const std::bad_alloc&) {
+					this->push(int32_t(-1));
+					return true;
+				}
+
+				this->push(static_cast<int32_t>(old_pages));
+				return true;
+			},
+			[&](const MemorySize&) {
+				// returns (i32 current_pages)
+				size_t current_pages = this->memory.size() / PAGE_SIZE;
+				this->push(static_cast<int32_t>(current_pages));
 				return true;
 			},
 			[&](const ReinterpretBits rb) {

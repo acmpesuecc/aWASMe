@@ -2,6 +2,7 @@
 #include<stack>
 #include<vector>
 #include<variant>
+#include<cstdint>
 
 #include "module/instruction.hpp"
 #include "engine/funcs.hpp"
@@ -66,6 +67,12 @@ class VM {
 		std::vector<FunctionInfo> functions; 
 
 		std::vector<GlobalVar> globals;
+
+		// Linear memory (single default memory)
+		static constexpr size_t PAGE_SIZE = 65536; // 64 KiB
+		static constexpr size_t DEFAULT_MAX_MEMORY_PAGES = 65536; // up to 4 GiB
+		std::vector<uint8_t> memory;
+		size_t max_memory_pages = DEFAULT_MAX_MEMORY_PAGES;
 
 		bool run_instr(const Instruction& instr);
 
