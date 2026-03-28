@@ -2,9 +2,11 @@
 #include<stack>
 #include<vector>
 #include<variant>
+#include<cstdint>
 
 #include "module/instruction.hpp"
 #include "engine/funcs.hpp"
+#include "engine/global.hpp"
 
 class ControlFrame {	
 	private:
@@ -49,6 +51,8 @@ class VM {
 		// Registers a function into the VM and returns the index which will be used to refer to it.
 		size_t register_function(FunctionInfo f);
 
+		/// Returns the index of the registered global
+	 	size_t register_global(Value initial_value,bool is_mutable);
 
 	private:
 		std::vector<Value> stack;
@@ -62,6 +66,14 @@ class VM {
 		// NOTE: In the future when imported functions are supported, external functions must occupy lower indicies than WASM defined functions. In other words, register all imported functions first, then WASM defined one
 		std::vector<FunctionInfo> functions; 
 
+		std::vector<GlobalVar> globals;
+
+		// Linear memory (single default memory)
+		static constexpr size_t PAGE_SIZE = 65536; // 64 KiB
+		static constexpr size_t DEFAULT_MAX_MEMORY_PAGES = 65536; // up to 4 GiB
+		std::vector<uint8_t> memory;
+		size_t max_memory_pages = DEFAULT_MAX_MEMORY_PAGES;
+
 		bool run_instr(const Instruction& instr);
 
 		/// Given a vector of value types, validates the stack from the BACK returns an exception if the values mismatch. Also returns an exception when the size of the expected_values is greater than the values currently in the stack
@@ -74,6 +86,10 @@ class VM {
 		/// Given a vector of value types, validates the stack from the BACK and returns. Unlike expect_stack, this function needs the stack to be exactly equal to expected_values.
 		void expect_stack_exact(std::vector<ValueType> expected_values);
 
+		/// Throws an InvalidType exception if the top value isn't of the given type, else returns the top value
+		Value pop_type_or_error(ValueType type);
+
 		/// Sets the ip to the given ip after performing bounds checking. If given index >= current number of instructions then InvalidInstructionPointer exception is thrown
 		void set_ip(size_t index);
+
 };

@@ -65,6 +65,9 @@ std::string to_string(Instruction i) {
 				case FloatArithmetic::Kind::Mul:
 					out += "mul";
 					break;
+				case FloatArithmetic::Kind::Div:
+					out += "div";
+					break;
 			}
 			return out;
 		},
@@ -238,7 +241,7 @@ std::string to_string(Instruction i) {
 		},
 		[](End&) { return std::string("end"); },
 		[](Return&) { return std::string("return"); },
-		[](Br& b) { return "br " + std::to_string(b.index); },
+		[](Br& b) { return ( b.is_unconditional  ? "br " : "br_if ") + std::to_string(b.index); },
 		[](Call& c) { return "call " + std::to_string(c.index); },
 		[](Local& l) { 
 			std::string out = "local.";
@@ -254,6 +257,127 @@ std::string to_string(Instruction i) {
 					break;
 			}
 			out += " " + std::to_string(l.index);
+			return out;
+		},
+		[](Global& l) { 
+			std::string out = "global.";
+			switch(l.kind) {
+				case Global::Kind::Get:
+					out += "get";
+					break;
+				case Global::Kind::Set:
+					out += "set";
+					break;
+			}
+			out += " " + std::to_string(l.index);
+			return out;
+		},
+		[](IntConverters& i) {
+			std::string out = "unreachable";
+			switch(i.kind) {
+				case IntConverters::Wrap:  out = "i32.wrap_i64"; break; 
+				case IntConverters::ExtendU:  out = "i64.extend_i32_u"; break; 
+				case IntConverters::ExtendS:  out = "i64.extend_i32_s"; break; 
+			}
+			return out;
+		},
+
+		[](FloatConverters& i) {
+			std::string out = "unreachable";
+			switch(i.kind) {
+				case FloatConverters::Promote:  out = "f64.promote_f32"; break; 
+				case FloatConverters::Demote:  out = "f32.demote_f64"; break; 
+			}
+			return out;
+		},
+
+		[](FloatToIntTrunc& i) {
+			std::string out = "";
+			out += i.to == IntType::i32 ? "i32" : "i64";
+			out += ".trunc_";
+			out += i.from == FloatType::f32 ? "f32" : "f64";
+			out += "_";
+			out += i.is_signed ? "s" : "u";
+			return out;
+		},
+		[](IntToFloat& i) {
+			std::string out = "";
+			out += i.to == FloatType::f32 ? "f32" : "f64";
+			out += ".convert_";
+			out += i.from == IntType::i32 ? "i32" : "i64";
+			out += "_";
+			out += i.is_signed ? "s" : "u";
+			return out;
+		},
+		[](MemoryGrow&) {
+			return std::string("memory.grow");
+		},
+		[](MemorySize&) {
+			return std::string("memory.size");
+		},
+		[](MemoryLoad& ml) {
+			std::string out;
+			switch (ml.kind) {
+				case MemoryLoad::Kind::I32Load: out = "i32.load"; break;
+				case MemoryLoad::Kind::I64Load: out = "i64.load"; break;
+				case MemoryLoad::Kind::F32Load: out = "f32.load"; break;
+				case MemoryLoad::Kind::F64Load: out = "f64.load"; break;
+				case MemoryLoad::Kind::I32Load8S: out = "i32.load8_s"; break;
+				case MemoryLoad::Kind::I32Load8U: out = "i32.load8_u"; break;
+				case MemoryLoad::Kind::I32Load16S: out = "i32.load16_s"; break;
+				case MemoryLoad::Kind::I32Load16U: out = "i32.load16_u"; break;
+				case MemoryLoad::Kind::I64Load8S: out = "i64.load8_s"; break;
+				case MemoryLoad::Kind::I64Load8U: out = "i64.load8_u"; break;
+				case MemoryLoad::Kind::I64Load16S: out = "i64.load16_s"; break;
+				case MemoryLoad::Kind::I64Load16U: out = "i64.load16_u"; break;
+				case MemoryLoad::Kind::I64Load32S: out = "i64.load32_s"; break;
+				case MemoryLoad::Kind::I64Load32U: out = "i64.load32_u"; break;
+			}
+			if (ml.offset != 0) {
+				out += " offset=" + std::to_string(ml.offset);
+			}
+			return out;
+		},
+		[](MemoryStore& ms) {
+			std::string out;
+			switch (ms.kind) {
+				case MemoryStore::Kind::I32Store: out = "i32.store"; break;
+				case MemoryStore::Kind::I64Store: out = "i64.store"; break;
+				case MemoryStore::Kind::F32Store: out = "f32.store"; break;
+				case MemoryStore::Kind::F64Store: out = "f64.store"; break;
+				case MemoryStore::Kind::I32Store8: out = "i32.store8"; break;
+				case MemoryStore::Kind::I32Store16: out = "i32.store16"; break;
+				case MemoryStore::Kind::I64Store8: out = "i64.store8"; break;
+				case MemoryStore::Kind::I64Store16: out = "i64.store16"; break;
+				case MemoryStore::Kind::I64Store32: out = "i64.store32"; break;
+			}
+			if (ms.offset != 0) {
+				out += " offset=" + std::to_string(ms.offset);
+			}
+			return out;
+		},
+		[](MemoryFill&) {
+			return std::string("memory.fill");
+		},
+		[](MemoryCopy&) {
+			return std::string("memory.copy");
+		},
+		[](ReinterpretBits& rb) {
+			std::string out = "";
+			switch(rb.from) {
+				case ValueType::i32:
+					out = "i32.reinterpret_f32";
+					break;
+				case ValueType::i64:
+					out = "i64.reinterpret_f64";
+					break;
+				case ValueType::f32:
+					out = "f32.reinterpret_i32";
+					break;
+				case ValueType::f64:
+					out = "f64.reinterpret_i64";
+					break;
+			}
 			return out;
 		}
 	};

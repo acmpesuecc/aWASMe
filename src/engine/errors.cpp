@@ -64,6 +64,7 @@ const char* InvalidInstructionPointer::what() const noexcept {
 std::string to_string(InvalidIndex::IndexFor f) {
 	switch(f) {
 		case InvalidIndex::IndexFor::Local: return "locals";
+		case InvalidIndex::IndexFor::Global: return "globals";
 	}
 }
 
@@ -83,6 +84,11 @@ InvalidIndex::InvalidIndex(IndexFor ifor,size_t index,size_t min, size_t max) {
 const char* InvalidIndex::what() const noexcept {
 	return this->message.c_str();
 }
+
+const char* MutabilityError::what() const noexcept {
+	return this->message.c_str();
+}
+
 
 
 

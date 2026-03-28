@@ -3,6 +3,7 @@ INCLUDE_DIR := include
 SRC_DIR := src
 
 CXX := g++
+
 CXXFLAGS := -Wall -Wextra -MMD -MP -std=c++20 -I$(INCLUDE_DIR)
 
 ENGINE_SRC := $(SRC_DIR)/engine
