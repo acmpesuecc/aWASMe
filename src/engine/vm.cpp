@@ -204,7 +204,7 @@ struct UnaryFloatVisitor {
 				switch(op_kind) {
 					case UnaryFloat::Kind::Abs: return std::abs(a);
 					case UnaryFloat::Kind::Neg: return -1 * a;
-					case UnaryFloat::Kind::Ciel: return std::ceil(a);
+					case UnaryFloat::Kind::Ceil: return std::ceil(a);
 					case UnaryFloat::Kind::Floor: return std::floor(a);
 					case UnaryFloat::Kind::Trunc: return std::trunc(a);
 					case UnaryFloat::Kind::Nearest: return std::round(a);
