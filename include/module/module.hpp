@@ -4,58 +4,81 @@
 #include<optional>
 #include "instruction.hpp"
 
-//Local variable data for function data structure
-struct LocalData
-{ 
-	int i32_count; //only storing count here because the locals are initialized in the function code which the engine has to run
-	int i64_count;
-	int f32_count;
-	int f64_count;  
-	
-	LocalData() 
-	{
-		i32_count = 0;
-		i64_count = 0;
-		f32_count = 0;
-		f64_count = 0;
-	}
-};
-
-//Function data structure
-struct Function
-{
-    uint8_t typeIndex;
-	struct LocalData localData;
-    std::vector<Instruction> funcCode; 
-
-	Function()
-	{
-		//we will read the function section to get the type index and initialize the typeIndex value then
-		localData = LocalData();
-		funcCode = std::vector<Instruction>();
-	}
-};
-
-
-//Module = data being sent to the engine
 class Module 
 {
-    public:
-		std::size_t filesize;
-		std::vector<Function> functions;      
-		std::optional<uint32_t> start_function;		
-		/* 
-		Will implement these in the future
-			std::vector<Memory> memories;         
-			std::vector<Export> exports;          
-			std::vector<Global> globals;
-		*/
+	public:
 
-		//Constructors
-		Module(int s)
+	//STRUCT DEFINITIONS
+	struct LocalData
+	{ 
+		int i32; //only storing count here because the locals are initialized in the function code which the engine has to run
+		int i64;
+		int f32;
+		int f64;  
+		
+		LocalData() 
 		{
-			filesize = s;
-			functions = std::vector<Function>();
-			//not sure how to assign start_function - what value should it take when the start_function is undefined?
+			i32 = 0;
+			i64 = 0;
+			f32 = 0;
+			f64 = 0;
 		}
+	};
+
+	struct Function
+	{
+		uint8_t typeIndex;
+		struct LocalData localCounts;
+		std::vector<Instruction> code; 
+
+		Function()
+		{
+			//typeIndex will be initialized during function section parsing
+			localCounts = LocalData();
+			code = std::vector<Instruction>{};
+		}
+	};
+
+	struct Global
+	{
+		ValueType type;
+		bool is_mutable;
+		std::vector<Instruction> initCode;
+	};
+	
+	struct Type //currently only supports function signatures
+	{
+		std::vector<ValueType> params;
+		//currently WASM 1.0 only allows 1 return type max per function, but this may increase later so parser accepts multiple
+		std::vector<ValueType> returns; 
+	};
+
+	struct Memory
+	{
+		IntType address_type;
+		size_t start_page;
+		std::optional<size_t> end_page;
+	};
+
+	//MODULE STRUCTURE
+	std::vector<Function> functions;      
+	std::optional<uint32_t> start_function;	
+	std::vector<Global> globals;	
+	std::vector<Type> types;
+	std::vector<Memory> memories; //currently WASM 1.0 allows only one 1 memory max, but this may increase later so parser accepts multiple        
+
+	/* 
+	Will implement these in the future
+		std::vector<Export> exports;          
+	*/
+
+	//Constructor
+	Module()
+	{
+		functions = std::vector<Function>{};
+		start_function = std::nullopt;
+		globals = std::vector<Global>{};
+		types = std::vector<Type>{};
+		memories = std::vector<Memory>{};
+	}
 };
