@@ -93,7 +93,7 @@ void parse_type_section(std::span<const uint8_t> data, Module& module) //current
 		for (size_t i=0; i < returnCount; i++)
 		{
 			ValueType rType = static_cast<ValueType>(data[offset++]);
-			type_data.params.push_back(rType);
+			type_data.returns.push_back(rType);
 		}
 
 		module.types.push_back(type_data);
