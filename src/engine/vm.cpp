@@ -390,7 +390,30 @@ bool VM::run_instr(const Instruction& instr) {
 			[&](const Unreachable&) { return false;},
 			[&](const Drop&) { 
 				if(this->pop().has_value()) return true;
-				throw std::runtime_error("Expected [any], got []");
+				throw ExpectStackError("[any]",{});
+			},
+			[&](const Select&) { 
+				if(this->stack.size() < 3 || to_value_type(this->stack.back()) != ValueType::i32) {
+					throw ExpectStackError("[any,any,i32]", std::vector<Value>(this->stack.begin(),this->stack.end()));
+				}
+
+				if(to_value_type(*(this->stack.end()-2)) !=
+						to_value_type(*(this->stack.end()-3))) {
+					ValueType exp = to_value_type(*(this->stack.end()-2));
+					throw ExpectStackError({exp,exp,ValueType::i32},std::vector<Value>(this->stack.begin(),this->stack.end()));
+				}
+
+				Value cond = this->pop().value();
+				Value v_false = this->pop().value();
+				Value v_true = this->pop().value();
+
+				if(std::get<int32_t>(cond)) {
+					this->push(v_true);
+				} else {
+					this->push(v_false);
+				}
+
+				return true;
 			},
 			[&](const LoadConst& i) {
 				this->push(i.value);

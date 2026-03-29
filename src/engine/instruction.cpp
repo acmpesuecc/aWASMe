@@ -5,6 +5,7 @@ std::string to_string(Instruction i) {
 		[](Nop&) { return std::string("nop"); },
 		[](Unreachable&) { return std::string("unreachable"); },
 		[](Drop&) { return std::string("drop"); },
+		[](Select&) { return std::string("select"); },
 		[](LoadConst& lc) {
 			Value v = lc.value;
 			std::string out = "";

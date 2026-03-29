@@ -40,6 +40,24 @@ ExpectStackError::ExpectStackError(std::vector<ValueType> expected, std::vector<
 	out += "]";
 	this->message = out;
 }
+
+
+ExpectStackError::ExpectStackError(std::string expected, std::vector<Value> got) {
+	std::string out = "Expected ";
+	out += expected;
+	out += ", got [";
+	size_t i = 0;
+
+	for(auto it = got.begin(); it != got.end(); it++)  {
+		out += to_string(to_value_type(*it));
+		if(i+1 != got.size()) out += ",";
+		i++;
+	}
+
+	out += "]";
+	this->message = out;
+}
+
 const char* ExpectStackError::what() const noexcept {
 	return this->message.c_str();
 }
@@ -65,6 +83,8 @@ std::string to_string(InvalidIndex::IndexFor f) {
 	switch(f) {
 		case InvalidIndex::IndexFor::Local: return "locals";
 		case InvalidIndex::IndexFor::Global: return "globals";
+		default:
+						     return "";
 	}
 }
 

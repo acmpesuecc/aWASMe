@@ -14,6 +14,7 @@ class ExpectStackError: public std::exception {
 		ExpectStackError(std::string& msg): message(msg) {};
 		ExpectStackError(std::vector<ValueType> expected, std::vector<ValueType> got);
 		ExpectStackError(std::vector<ValueType> expected, std::vector<Value> got);
+		ExpectStackError(std::string expected, std::vector<Value> got);
 		const char* what() const noexcept; 
 };
 

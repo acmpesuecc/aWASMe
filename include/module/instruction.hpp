@@ -26,6 +26,7 @@ struct Block {
 struct Nop {};
 struct Unreachable {};
 struct Drop {};
+struct Select {};
 
 
 struct LoadConst {
@@ -313,6 +314,7 @@ using Instruction = std::variant<
 	Nop,
 	Unreachable,
 	Drop,
+	Select,
 	LoadConst,
 	IntArithmetic,
 	FloatArithmetic,
