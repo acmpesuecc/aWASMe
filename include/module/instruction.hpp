@@ -25,6 +25,7 @@ struct Block {
 
 struct Nop {};
 struct Unreachable {};
+struct Drop {};
 
 
 struct LoadConst {
@@ -311,6 +312,7 @@ overloads(Ts...) -> overloads<Ts...>;
 using Instruction = std::variant<
 	Nop,
 	Unreachable,
+	Drop,
 	LoadConst,
 	IntArithmetic,
 	FloatArithmetic,

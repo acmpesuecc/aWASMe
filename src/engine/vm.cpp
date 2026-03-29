@@ -386,8 +386,12 @@ struct IntToFloatVisitor {
 
 bool VM::run_instr(const Instruction& instr) {
 	const auto visitor = overloads {
-		[&](const Nop&) { return true;},
+			[&](const Nop&) { return true;},
 			[&](const Unreachable&) { return false;},
+			[&](const Drop&) { 
+				if(this->pop().has_value()) return true;
+				throw std::runtime_error("Expected [any], got []");
+			},
 			[&](const LoadConst& i) {
 				this->push(i.value);
 				return true;

@@ -4,6 +4,7 @@ std::string to_string(Instruction i) {
 	const auto visitor = overloads {
 		[](Nop&) { return std::string("nop"); },
 		[](Unreachable&) { return std::string("unreachable"); },
+		[](Drop&) { return std::string("drop"); },
 		[](LoadConst& lc) {
 			Value v = lc.value;
 			std::string out = "";
