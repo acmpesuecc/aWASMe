@@ -12,40 +12,47 @@ void parse_code_section(std::span<const uint8_t> data, Module& module)
 {
 	size_t secSize = data.size();
 	size_t offset = 0;
-	size_t num_funcs = leb128_decode(data, secSize, offset);
+	uint32_t num_funcs = leb128_decode(data, secSize, offset);
+	std::cout << "Number of functions defined: " << num_funcs << std::endl;
 	
 	for (size_t i = 0; i < num_funcs; i++) 
 	{
+		std::cout << "Function " << i << std::endl;
 		size_t bodySize = leb128_decode(data, secSize, offset);
 		size_t endOfBody = offset + bodySize;
-		size_t numlocals = leb128_decode(data, secSize, offset);
+		size_t numlocaltypes = leb128_decode(data, secSize, offset);
+		std::cout << "Number of types of locals defined: " << numlocaltypes << std::endl;
 
 		Module::Function* current_func = &module.functions[i];
 
-		while (numlocals)
+		for (size_t i = 0; i < numlocaltypes; i++)
 		{
 			size_t numlocals_specifictype = leb128_decode(data, secSize, offset);
-			numlocals -= numlocals_specifictype;
 			ValueType type = static_cast<ValueType>(data[offset]);
+			std::cout << numlocals_specifictype << " locals with type as ";
 			switch (type) 
 			{
 				case ValueType::i32: 
 				{
+					std::cout << "i32" << std::endl;
 					current_func->localCounts.i32 = numlocals_specifictype;
 					break;
 				}
 				case ValueType::i64: 
 				{
+					std::cout << "i64" << std::endl;
 					current_func->localCounts.i64 = numlocals_specifictype;
 					break;
 				}
 				case ValueType::f32: 
 				{
+					std::cout << "f32" << std::endl;
 					current_func->localCounts.f32 = numlocals_specifictype;
 					break;
 				}
 				case ValueType::f64: 
 				{
+					std::cout << "f64" << std::endl;
 					current_func->localCounts.f64 = numlocals_specifictype;
 					break;
 				}
@@ -69,7 +76,7 @@ void parse_type_section(std::span<const uint8_t> data, Module& module) //current
 	size_t offset = 0;
 	uint32_t typeCount = leb128_decode(data,secSize,offset);
 	std::cout << "TYPE COUNT: " << typeCount << std::endl;
-	Module::Type type_data;
+	Module::Type type_data{};
 
 
 	while (offset < secSize)
@@ -181,48 +188,58 @@ void parse_mem_section(std::span<const uint8_t> data, Module& module)
 	size_t offset = 0;
 	size_t MemCount = leb128_decode(data, secSize, offset);
 
-	Module::Memory memory{};
-	uint8_t mem_type;
+	Module::MemoryInterface memory{};
+	MemFlag mem_type;
 
 	for (size_t i = 0; i < MemCount; i++)
 	{
-		mem_type = data[offset++]; //flags - bit 2 defines address type, bit 0 defines whether max limit exists
+		std::cout << "Memory has ";
+		mem_type = static_cast<MemFlag>(data[offset]); //flags - bit 2 defines address type, bit 0 defines whether max limit exists
 		switch (mem_type)
 		{
-			case 0x00: //i32 address, no max limit
+			case MemFlag::Address32_NoMax: 
 			{
 				memory.address_type = IntType::i32;
 				memory.start_page = leb128_decode(data, secSize, offset);
 				memory.end_page = std::nullopt;
+				std::cout << "Address type: 32 bit. No upper limit." << std::endl;
+				std::cout << "Start page in hex: " << std::hex << memory.start_page << std::endl;
 				break;
 			}
-			case 0x01: //i32 address, max limit exists
+			case MemFlag::Address32_MaxExists:
 			{
 				memory.address_type = IntType::i32;
 				memory.start_page = leb128_decode(data, secSize, offset);
 				memory.end_page = leb128_decode(data, secSize, offset);
+				std::cout << "Address type: 32 bit. Upper limit exists." << std::endl;
+				std::cout << "Start, end pages in hex: " << std::hex << memory.start_page << ", " << memory.end_page.value() << std::endl;
 				break;
 			}
-			case 0x04: //i64 address, no max limit
+			case MemFlag::Address64_NoMax:
 			{
 				memory.address_type = IntType::i64;
 				memory.start_page = leb128_decode(data, secSize, offset);
 				memory.end_page = std::nullopt;
+				std::cout << "Address type: 64 bit. No upper limit." << std::endl;
+				std::cout << "Start page in hex: " << std::hex << memory.start_page << std::endl;
 				break;
 			}
-			case 0x05: //i64 address, max limit exists
+			case MemFlag::Address64_MaxExists: 
 			{
 				memory.address_type = IntType::i64;
 				memory.start_page = leb128_decode(data, secSize, offset);
 				memory.end_page = leb128_decode(data, secSize, offset);
+				std::cout << "Address type: 32 bit. Upper limit exists." << std::endl;
+				std::cout << "Start, end pages in hex: " << std::hex << memory.start_page << ", " << memory.end_page.value() << std::endl;
 				break;
 			}
 			default: 
 			{
-				std::cout << "Error while parsing memory section - invalid memory flags. Flags given were (displayed in hex format): " << std::hex << mem_type << std::endl;
+				std::cout << "Error while parsing memory section - invalid memory flags. Flags given were (displayed in hex format): " << std::hex << data[offset] << std::endl;
 				return;
 			}
 		}
+		++offset;
 
 		module.memories.push_back(memory);
 	}
@@ -262,67 +279,154 @@ void parse_import_section(std::span<const uint8_t>data, Module& module)
 {
 	size_t secSize = data.size();
 	size_t offset = 0;
-	size_t importCount = leb128_decode(data,secSize,offset);
-	std::cout<<"Import Count: "<<importCount<<std::endl;
-	for(size_t i =0; i<importCount; i++)
+	size_t importCount = leb128_decode(data, secSize, offset);
+	std::cout << "Import Count: " << importCount << std::endl;
+
+	Module::Import import{};
+
+	for(size_t i = 0; i < importCount; i++)
 	{
 		std::string modStr =read_string(data,offset);
-		std::cout<<"Import from: "<<modStr<<std::endl;
-		std::string feildStr=read_string(data,offset);
-		std::cout<<"feild name: "<<feildStr<<std::endl;
-		uint8_t descTag = data[offset++];
+		std::cout << "Importing from module named: " << modStr << std::endl;
+		import.module_name = modStr;
+
+		std::string itemStr = read_string(data, offset);
+		std::cout << "Item name: " << itemStr << std::endl;
+		import.item_name = itemStr;
+
+
+		ExternalType descTag = static_cast<ExternalType>(data[offset++]);
+		std::cout << "Import type: ";
 		switch (descTag)
 		{
-			case 0x00:
+			case ExternalType::Function:
 			{
-				std::cout<<"Function"<<std::endl;
-				size_t func_index = leb128_decode(data,secSize,offset);
+				Module::FunctionInterface func{};
+				func.typeIndex = leb128_decode(data, secSize, offset);
+				std::cout<< "Function. It has type index " << func.typeIndex << std::endl;
+				import.interface = Module::ImportInterface{std::in_place_type<Module::FunctionInterface>, func};
 				break;
 			}
-			case 0x01:
+			case ExternalType::Table:
 			{
-				uint8_t refType= data[offset++];
-				std::cout<<"RefType: "<<(refType ==0x70? "funcref\n":"")<<(refType ==0x6F? "externref\n":"");
-				bool hasMax = data[offset++];
-				size_t min = leb128_decode(data,secSize,offset);
-				size_t max;
-				std::cout<<"Min: "<<min<<std::endl;
-				if(hasMax)
+				std::cout << "ERROR - table types are not supported currently" << std::endl;
+				return;
+			}
+			case ExternalType::Memory:
+			{
+
+				std::cout << "Memory" << std::endl;
+				Module::MemoryInterface memory{};
+				MemFlag mem_type = static_cast<MemFlag>(data[offset]);
+				switch (mem_type)
 				{
-					max= leb128_decode(data,secSize,offset);
-					std::cout<<"Max: "<<max<<std::endl;
+					case MemFlag::Address32_NoMax: 
+					{
+						memory.address_type = IntType::i32;
+						memory.start_page = leb128_decode(data, secSize, offset);
+						memory.end_page = std::nullopt;
+						std::cout << "Address type: 32 bit. No upper limit." << std::endl;
+						std::cout << "Start page in hex: " << std::hex << memory.start_page << std::endl;
+						break;
+					}
+					case MemFlag::Address32_MaxExists:
+					{
+						memory.address_type = IntType::i32;
+						memory.start_page = leb128_decode(data, secSize, offset);
+						memory.end_page = leb128_decode(data, secSize, offset);
+						std::cout << "Address type: 32 bit. Upper limit exists." << std::endl;
+						std::cout << "Start, end pages in hex: " << std::hex << memory.start_page << ", " << memory.end_page.value() << std::endl;
+						break;
+					}
+					case MemFlag::Address64_NoMax:
+					{
+						memory.address_type = IntType::i64;
+						memory.start_page = leb128_decode(data, secSize, offset);
+						memory.end_page = std::nullopt;
+						std::cout << "Address type: 64 bit. No upper limit." << std::endl;
+						std::cout << "Start page in hex: " << std::hex << memory.start_page << std::endl;
+						break;
+					}
+					case MemFlag::Address64_MaxExists: 
+					{
+						memory.address_type = IntType::i64;
+						memory.start_page = leb128_decode(data, secSize, offset);
+						memory.end_page = leb128_decode(data, secSize, offset);
+						std::cout << "Address type: 32 bit. Upper limit exists." << std::endl;
+						std::cout << "Start, end pages in hex: " << std::hex << memory.start_page << ", " << memory.end_page.value() << std::endl;
+						break;
+					}
+					default: 
+					{
+						std::cout << "Error while parsing import section - invalid memory flags. Flags given were (displayed in hex format): " << std::hex << data[offset] << std::endl;
+						return;
+					}
 				}
+				++offset;
+
+				import.interface = Module::ImportInterface{std::in_place_type<Module::MemoryInterface>, memory};
 				break;
 			}
-			case 0x02:
+			case ExternalType::Global:
 			{
-				std::cout<<"Memory"<<std::endl;
-				bool hasMax =data[offset++];
-				size_t min = leb128_decode(data,secSize,offset);
-				size_t max;
-				std::cout<<"Min: "<<min<<std::endl;
-				if(hasMax)
+				Module::GlobalInterface global{};
+				std::cout << "This import is a global." << std::endl;
+				global.type = static_cast<ValueType>(data[offset++]);
+				global.is_mutable =  bool(data[offset++]);
+
+				std::cout << "Its type is: ";
+				switch (global.type)
 				{
-					max= leb128_decode(data,secSize,offset);
-					std::cout<<"Max: "<<max<<std::endl;
+					case ValueType::i32:
+					{
+						std::cout << "i32" << std::endl;
+						break;
+					}
+					case ValueType::i64:
+					{
+						std::cout << "i64" << std::endl;
+						break;
+					}
+					case ValueType::f32:
+					{
+						std::cout << "f32" << std::endl;
+						break;
+					}
+					case ValueType::f64:
+					{
+						std::cout << "f64" << std::endl;
+						break;
+					}
+					default: //should never happen
+					{
+						std::cout << "(Error - invalid type)" << std::endl;
+					}
 				}
+
+				std::cout << "Mutability: " << global.is_mutable << std::endl;
+				import.interface = Module::ImportInterface{std::in_place_type<Module::GlobalInterface>, global};
+
 				break;
 			}
-			case 0x03:
+			case ExternalType::Tag:
 			{
-				std::cout<<"Gloabal"<<std::endl;
-				ValueType gType = static_cast<ValueType>(data[offset++]);
-				std::cout<<"Type is: "<<(gType== ValueType::i32? " i32\n":" Other\n");
-				bool mut =data[offset++];
-				std::cout<<"mut: "<<mut<<std::endl;
-				break;
+				std::cout << "ERROR - tag types are not supported currently" << std::endl;
+				return;
 			}
 			default:
 				break;
-		
 		}
 
-	
+		module.imports.push_back(import);
+	}
+
+	if (module.imports.size() == importCount)
+	{
+		std::cout << "Import section parsed successfully - " << importCount << " memories decoded" << std::endl;
+	}
+	else
+	{
+		std::cout << "Error while parsing import section, only " << module.memories.size() << " imports pushed into module object" << std::endl;
 	}
 }
 
@@ -388,8 +492,6 @@ void parse_element_section(std::span<const uint8_t>data,Module& module)
 		default:
 			break;
 		}
-		
-
 	}
 }
 
@@ -423,20 +525,68 @@ void parse_data_section(std::span<const uint8_t>data, Module& module)
 	}
 }
 
-void parse_export_section(std::span<const uint8_t>data,Module& module)
+void parse_export_section(std::span<const uint8_t> data, Module& module)
 {
 	size_t secSize=data.size();
 	size_t offset =0;
 	size_t exportCount=leb128_decode(data,secSize,offset);
+	std::cout << "Number of exports: " << exportCount << std::endl;
+
+	Module::Export export_item{};
 	for(size_t i=0;i<exportCount;i++)
 	{
-		std::string name =read_string(data ,offset);
-		std::cout<<"Export Name: "<<name<<std::endl;
-		Tag tag =static_cast<Tag>(data[offset++]);
-		std::cout<<"Tag "<<(tag==Tag::Function? "Function\n":"Other\n");
-		size_t index=leb128_decode(data,secSize,offset);
-		std::cout<<"Index "<<index<<std::endl;
+		std::string name = read_string(data ,offset);
+		std::cout << "Export Name: " << name << std::endl;
+		export_item.name = name;
+		
+		std::cout << "Export type: ";
+		ExternalType tag = static_cast<ExternalType>(data[offset]);
+		switch (tag)
+		{
+			case ExternalType::Function:
+			{
+				std::cout << "function" << std::endl;
+				break;
+			}
+			case ExternalType::Table:
+			{
+				std::cout << "table" << std::endl;
+				break;
+			}
+			case ExternalType::Memory:
+			{
+				std::cout << "memory" << std::endl;
+				break;
+			}
+			case ExternalType::Global:
+			{
+				std::cout << "global" << std::endl;
+				break;
+			}
+			default: //should never happen
+			{
+				std::cout << "Invalid export type tag: " << (int)data[offset] << std::endl;
+			}
+		} 
+		export_item.type = tag;
+		++offset;
+
+		size_t index = leb128_decode(data, secSize, offset);
+		std::cout << "Index: " << index << std::endl;
+		export_item.index = index;
+
+		module.exports.push_back(export_item);
 	}
+
+	if (module.exports.size() == exportCount) 
+	{
+		std::cout << "Export section parsed successfully - " << exportCount << " exports decoded" << std::endl;
+	}
+	else 
+	{
+		std::cout << "Error while parsing export secion, only " << module.exports.size() << "exports pushed into module object" << std::endl;
+	}
+
 }
 
 
@@ -508,7 +658,7 @@ std::string read_string(std::span<const uint8_t>data,size_t &offset)
 	std::string bytes ="";
 	for(size_t j=0;j<len;j++)
 	{
-		bytes +=(char)(data[offset++]);
+		bytes += reinterpret_cast<uint8_t>(data[offset++]);
 	}
 	return bytes;
 }
@@ -864,12 +1014,11 @@ void print_string_of_opcode(Instr opcode) {
 	}
 }
 
-size_t leb128_decode(std::span<const uint8_t> data, size_t size, size_t& offset)
-{																			
-    size_t integer=0;
-    
-    int shift=0;
-    while(offset<size)													
+size_t leb128_decode(std::span<const uint8_t> data, size_t secSize, size_t& offset) 
+{
+	size_t integer = 0;
+    int shift = 0;
+    while(offset < secSize)		
     {
         if(data[offset]&0x80) 
         {
@@ -883,6 +1032,5 @@ size_t leb128_decode(std::span<const uint8_t> data, size_t size, size_t& offset)
         }
 		++offset;
     }
-    return integer;
+    return integer;	
 }
-

@@ -1,6 +1,14 @@
 #pragma once
 #include<cstdint>
 
+enum class MemFlag : uint8_t
+{
+    Address32_NoMax             = 0x00,
+    Address32_MaxExists         = 0x01,
+    Address64_NoMax             = 0x04,
+    Address64_MaxExists         = 0x05,
+};
+
 enum class Flag : uint8_t
 {
     ActiveImplicit          = 0x00,  // active, table 0, func indices
@@ -11,12 +19,4 @@ enum class Flag : uint8_t
     PassiveExpr             = 0x05,  // passive, expressions
     ActiveExplicitExpr      = 0x06,  // active, explicit table, expressions
     DeclarativeExpr         = 0x07,  // declarative, expressions
-};
-
-enum class Tag : uint8_t
-{
-       Function     = 0x00,
-       Table        = 0x01,
-       Memory       = 0x02,
-       Global       = 0x03, 
 };

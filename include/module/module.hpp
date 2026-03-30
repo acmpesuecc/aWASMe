@@ -2,11 +2,43 @@
 #include<vector>
 #include<cstdint>
 #include<optional>
+#include<variant>
 #include "instruction.hpp"
+
+enum class ExternalType : uint8_t //used in imports and exports
+{
+       Function     = 0x00,
+       Table        = 0x01,
+       Memory       = 0x02,
+       Global       = 0x03, 
+       Tag          = 0x04,
+       //Note: not supporting tag types or tables currently
+};
 
 class Module 
 {
 	public:
+
+	//Interface struct definitions for imports - currently only supports globals, memories and functions
+	struct GlobalInterface
+	{
+		ValueType type;
+		bool is_mutable;	
+	};
+
+	struct MemoryInterface
+	{
+		IntType address_type;
+		size_t start_page;
+		std::optional<size_t> end_page;
+	};
+
+	struct FunctionInterface
+	{
+		size_t typeIndex;
+	};
+	typedef std::variant<MemoryInterface, GlobalInterface, FunctionInterface> ImportInterface;
+
 
 	//STRUCT DEFINITIONS
 	struct LocalData
@@ -49,15 +81,23 @@ class Module
 	struct Type //currently only supports function signatures
 	{
 		std::vector<ValueType> params;
-		//currently WASM 1.0 only allows 1 return type max per function, but this may increase later so parser accepts multiple
 		std::vector<ValueType> returns; 
+			//currently WASM 1.0 only allows 1 return type max per function, but this may increase later so parser accepts multiple
 	};
 
-	struct Memory
+	struct Import
 	{
-		IntType address_type;
-		size_t start_page;
-		std::optional<size_t> end_page;
+		std::string module_name;
+		std::string item_name;
+		ExternalType type;
+		ImportInterface interface;
+	};
+
+	struct Export
+	{
+		std::string name;
+		ExternalType type;
+		size_t index;
 	};
 
 	//MODULE STRUCTURE
@@ -65,12 +105,11 @@ class Module
 	std::optional<uint32_t> start_function;	
 	std::vector<Global> globals;	
 	std::vector<Type> types;
-	std::vector<Memory> memories; //currently WASM 1.0 allows only one 1 memory max, but this may increase later so parser accepts multiple        
-
-	/* 
-	Will implement these in the future
-		std::vector<Export> exports;          
-	*/
+	std::vector<MemoryInterface> memories; 
+		//parser has no extra information to store in memories besides what is already in the memory interface, so it is reused here
+		//currently WASM 1.0 allows only one 1 memory max, but this may increase later so parser accepts multiple        
+	std::vector<Import> imports;       
+	std::vector<Export> exports;   
 
 	//Constructor
 	Module()
@@ -79,6 +118,8 @@ class Module
 		start_function = std::nullopt;
 		globals = std::vector<Global>{};
 		types = std::vector<Type>{};
-		memories = std::vector<Memory>{};
+		memories = std::vector<MemoryInterface>{};  
+		imports = std::vector<Import>{};
+		exports = std::vector<Export>{};
 	}
 };

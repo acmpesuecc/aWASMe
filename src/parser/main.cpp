@@ -40,12 +40,15 @@ int main (int argc, char* argv[]) {
 	
 	Module module{};
 	
+	std::cout << "****Note: all numeric values being printed on the screen are being printed in hexadecimal format\n\n" << std::endl;
+	std::cout << std::hex;
+
     while (offset < filesize)
     {
         uint8_t Id = data[offset]; //read section ID
 		std::cout << "Section ID: " << (int)Id << std::endl;
 		++offset;
-		secSize = leb128_decode(data, filesize, offset); //read section size - leb128 changes offset globally to be past the integer by itself 
+		secSize = leb128_decode(dataspan, filesize, offset); //read section size - leb128 changes offset globally to be past the integer by itself 
 		std::cout << "Section size (read from wasm file): " << secSize << std::endl;
 		sectionData = dataspan.subspan(offset, secSize);		//bc of above, section size is not included in section data when passing to parsing functions
 		
@@ -53,42 +56,54 @@ int main (int argc, char* argv[]) {
         {
          // Call the corrosponding functions here 
             case 1:
+				std::cout << "Parsing type section" << std::endl;
 				parse_type_section(sectionData, module);
                 break;
 			case 2:
+				std::cout << "Parsing import section" << std::endl;
 				parse_import_section(sectionData, module);
 				break;
             case 3:
+				std::cout << "Parsing function section" << std::endl;
 				parse_func_section(sectionData, module);
                 break;
 			case 4:
+				std::cout << "Parsing table section" << std::endl;
 				parse_table_section(sectionData, module);
 				break;
 			case 5:
+				std::cout << "Parsing memory section" << std::endl;
 				parse_mem_section(sectionData, module);
 				break;
 			case 6:
+				std::cout << "Parsing global section" << std::endl;
 				parse_global_section(sectionData, module);
 				break;
 			case 7:
+				std::cout << "Parsing export section" << std::endl;
 				parse_export_section(sectionData, module);
 				break;
             case 8:
+				std::cout << "Parsing start section" << std::endl;
 				parse_start_section(sectionData, module);
                 break;
 			case 9:
+				std::cout << "Parsing element section" << std::endl;
 				parse_element_section(sectionData, module);
 				break;
             case 10:
+				std::cout << "Parsing code section" << std::endl;
+				std::cout << "OFFSET BEFORE CODE SECTION: " << std::hex << (int)offset << std::endl; 
 				parse_code_section(sectionData, module);	
                 break;
 			case 11:
+				std::cout << "Parsing data section" << std::endl;
 				parse_data_section(sectionData, module);
 				break;
             default:
                 break;
         } 
-		std::cout<<"--------------------------------------------------------------------------\n";
+		std::cout<<"--------------------------------------------------------------------------" << std::endl;
 		
 		offset+=secSize;
     }
