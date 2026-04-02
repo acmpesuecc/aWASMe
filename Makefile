@@ -21,6 +21,9 @@ PARSER_TARGET := parser.exe
 
 ARGS ?= 	#Default command line arguments to executables is empty
 
+engine: $(ENGINE_TARGET)
+parser: $(PARSER_TARGET)
+
 $(ENGINE_TARGET): $(ENGINE_OBJ_FILES)
 	$(CXX) $(CXXFLAGS) -o $@ $(ENGINE_OBJ_FILES) 	
 $(PARSER_TARGET): $(PARSER_OBJ_FILES)
