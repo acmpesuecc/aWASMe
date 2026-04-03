@@ -85,5 +85,5 @@ class VM {
 		void set_ip(size_t index);
 
 
-		void call_imported_fn(ImportedFunction&,std::vector<Value>);
+		std::optional<Value> call_imported_fn(ImportedFunction&,std::vector<Value>);
 };

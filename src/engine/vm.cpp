@@ -1,5 +1,4 @@
 #include<stdexcept>
-#include<iostream>
 #include<cmath>
 #include<bit>
 #include<type_traits>
@@ -649,7 +648,18 @@ bool VM::run_instr(const Instruction& instr) {
 						args_v.push_back(this->pop().value());
 					}
 
-					this->call_imported_fn(std::get<ImportedFunction>(fn.kind),args_v);
+					ImportedFunction inf = std::get<ImportedFunction>(fn.kind);
+					std::optional<Value> rtv = this->call_imported_fn(inf,args_v);
+					if(rtv.has_value() != inf.return_type.has_value()) {
+						// TODO: make this better and  (maybe) create custom error type instead of runtime_error
+						if(inf.return_type.has_value()) {
+							throw std::runtime_error(std::string("Expected return type ") + to_string(inf.return_type.value()) + ", found none");
+						}
+						throw std::runtime_error(std::string("Expected no return type, found ") + to_string(to_value_type(rtv.value())));
+					}
+
+					if(rtv.has_value()) this->push(rtv.value());
+
 					return true;
 				}
 
@@ -746,7 +756,6 @@ bool VM::run_instr(const Instruction& instr) {
 							}
 							this->expect_stack(std::vector<ValueType>{to_value_type(g.value)});
 							auto t = this->pop().value();
-							std::cout<< std::get<int32_t>(t) << std::endl;
 
 							this->globals[global.index].value = t;
 							break;
@@ -842,7 +851,6 @@ bool VM::run_instr(const Instruction& instr) {
 
 void VM::run() {
 	while (ip < instructions.size()) {
-		std::cout << "Running instruction " << to_string(instructions[ip]) << "\n";
 		try {
 			if (!run_instr(instructions[ip])) {
 				break;
@@ -919,9 +927,14 @@ Value VM::pop_type_or_error(ValueType type) {
 	return this->pop().value();
 }
 
-void VM::call_imported_fn(ImportedFunction& ifn,std::vector<Value> params_v) {
+std::optional<Value> VM::call_imported_fn(ImportedFunction& ifn,std::vector<Value> params_v) {
+	std::optional<ValueType> return_type = ifn.return_type;
 	val params = to_js_value_vector(params_v);
 	size_t fn_index = ifn.index;
 	val func = val::global("exported_fns")[fn_index];
-	func.call<void>("apply",val::undefined(),params);
+	auto rval = func.call<val>("apply",val::undefined(),params);
+	if(rval.isUndefined() || rval.isNull()) return {};
+	if(return_type.has_value()) 
+		return from_js_value(rval,return_type.value());
+	return {};
 }

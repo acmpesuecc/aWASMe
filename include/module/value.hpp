@@ -20,3 +20,4 @@ std::string to_string(Value v);
 
 emscripten::val to_js_val(Value);
 emscripten::val to_js_value_vector(std::vector<Value> inp);
+Value from_js_value(emscripten::val,ValueType);

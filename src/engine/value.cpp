@@ -62,3 +62,14 @@ emscripten::val to_js_value_vector(std::vector<Value> inp) {
 	}
 	return out;
 }
+
+
+Value from_js_value(emscripten::val v,ValueType ty) {
+	switch(ty) {
+		case ValueType::i32: return v.as<int32_t>();
+		case ValueType::i64: return v.as<int64_t>();
+		case ValueType::f32: return v.as<float>();
+		case ValueType::f64: return v.as<double>();
+
+	}
+}

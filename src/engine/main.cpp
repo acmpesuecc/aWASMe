@@ -13,7 +13,7 @@ EMSCRIPTEN_KEEPALIVE
 void do_stuff() {
 	VM vm;
 
-	ImportedFunction inf = {.index = 0};
+	ImportedFunction inf = {.index = 0, .return_type = ValueType::i32};
 	Function f = {.args = {ValueType::i32}, .kind = inf};
 	size_t log_int = vm.register_function(f);
 

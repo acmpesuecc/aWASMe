@@ -19,6 +19,7 @@ struct InternalFunction {
 
 struct ImportedFunction {
 	size_t index;
+	std::optional<ValueType> return_type;
 };
 
 using FunctionKind = std::variant<InternalFunction,ImportedFunction>;
@@ -32,6 +33,7 @@ class ActivationRecord {
 	private:
 		FunctionInfo& info;
 		std::vector<Value> locals; // includes arguments, which always occupy lower indicies than locals defined inside function body
+		std::optional<ValueType> return_type;
 	public:
 
 		ActivationRecord(FunctionInfo& _info,std::vector<Value> locals_):info(_info), locals(locals_){};
