@@ -2,13 +2,30 @@
 #define FUNCS_HPP
 
 #include<vector>
+#include<variant>
 
 #include "module/instruction.hpp"
 
+// TODO: group and rename this in a more semantically consistent way
+
 struct FunctionInfo {
 	BlockInfo block_info;
-	std::vector<ValueType> args;
+};
+
+struct InternalFunction {
 	std::vector<ValueType> locals; 
+	FunctionInfo info;
+};
+
+struct ImportedFunction {
+	size_t index;
+};
+
+using FunctionKind = std::variant<InternalFunction,ImportedFunction>;
+
+struct Function{
+	std::vector<ValueType> args;
+	FunctionKind kind;
 };
 
 class ActivationRecord {

@@ -1,4 +1,13 @@
 #include "module/value.hpp"
+#include<emscripten/bind.h>
+
+template<class... Ts>
+struct overloads : Ts... {
+    using Ts::operator()...;
+};
+
+template<class... Ts>
+overloads(Ts...) -> overloads<Ts...>;
 
 ValueType to_value_type(Value v) {
 	if(std::holds_alternative<int32_t>(v))  return ValueType::i32;
@@ -34,4 +43,22 @@ std::string to_string(Value v) {
 	if(std::holds_alternative<float>(v))  return std::to_string(std::get<float>(v));
 	if(std::holds_alternative<double>(v))  return std::to_string(std::get<double>(v));
 	__builtin_unreachable();
+}
+
+emscripten::val to_js_val(Value val) {
+	return std::visit(overloads{
+			[](int32_t i) { return emscripten::val(i); },
+			[](int64_t i) { return emscripten::val::global("BigInt")(i); },
+			[](float i) { return emscripten::val(i); },
+			[](double i) { return emscripten::val(i); }
+			},val);
+}
+
+emscripten::val to_js_value_vector(std::vector<Value> inp) {
+	emscripten::val out = emscripten::val::array();
+	size_t i = 0;
+	for(auto it = inp.begin(); it != inp.end(); it++,i++) {
+		out.set(i,to_js_val(*it));
+	}
+	return out;
 }

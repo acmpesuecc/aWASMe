@@ -4,9 +4,13 @@
 #include<bit>
 #include<type_traits>
 #include<optional>
+#include<emscripten.h>
+#include<emscripten/val.h>
 
 #include "engine/vm.hpp"
 #include "engine/errors.hpp"
+
+using val = emscripten::val;
 
 bool ControlFrame::is_block() {
 	return std::holds_alternative<Block>(this->inner);
@@ -220,12 +224,12 @@ struct BinaryFloatVisitor {
 	BinaryFloat::Kind op_kind;
 
 	template<typename T, typename U>
-	Value operator()(const T& a, const U& b) {
+		Value operator()(const T& a, const U& b) {
 			(void)a;
 			(void)b;
 			throw std::runtime_error("Type mismatch");
 			return {};
-	}
+		}
 
 	template <typename T>
 		Value operator()(const T& a,const T& b) {
@@ -247,12 +251,12 @@ struct BinaryBitwiseVisitor {
 
 
 	template<typename T, typename U>
-	Value operator()(const T& a, const U& b) {
+		Value operator()(const T& a, const U& b) {
 			(void)a;
 			(void)b;
 			throw std::runtime_error("Type mismatch");
 			return {};
-	}
+		}
 
 
 	template <typename T>
@@ -312,25 +316,25 @@ struct FloatToIntTruncVisitor {
 	bool is_signed;
 
 	template<typename T>
-	Value operator()(const T& v) {
-		if(!std::is_same_v<T,float> && !std::is_same_v<T,double>) throw std::runtime_error("Only accepts float or double type");
+		Value operator()(const T& v) {
+			if(!std::is_same_v<T,float> && !std::is_same_v<T,double>) throw std::runtime_error("Only accepts float or double type");
 
-		if(convert_to == IntType::i32) {
-			int32_t t = static_cast<int32_t>(v);
-			if(!is_signed) {
-				return Value{int32_t((uint32_t)t)}; // TODO: raise a trap if this is outside [0,2^32]?
+			if(convert_to == IntType::i32) {
+				int32_t t = static_cast<int32_t>(v);
+				if(!is_signed) {
+					return Value{int32_t((uint32_t)t)}; // TODO: raise a trap if this is outside [0,2^32]?
+				}
+				return Value{t};
+			}else {
+				int64_t t = static_cast<int64_t>(v);
+				if(!is_signed) {
+					return Value{int64_t((uint64_t)t)};// TODO: raise a trap if this is outside [0,2^64]?
+				}
+				return Value{t};
 			}
-			return Value{t};
-		}else {
-			int64_t t = static_cast<int64_t>(v);
-			if(!is_signed) {
-				return Value{int64_t((uint64_t)t)};// TODO: raise a trap if this is outside [0,2^64]?
-			}
-			return Value{t};
+			throw std::runtime_error("Unreachable");
+
 		}
-		throw std::runtime_error("Unreachable");
-
-	}
 };
 
 struct IntToFloatVisitor {
@@ -338,25 +342,25 @@ struct IntToFloatVisitor {
 	bool is_signed;
 
 	template<typename T>
-	Value operator()(const T& v) {
-		if(!std::is_same_v<T,int32_t> && !std::is_same_v<T,int64_t>) throw std::runtime_error("Only accepts int32_t or int64_t type");
+		Value operator()(const T& v) {
+			if(!std::is_same_v<T,int32_t> && !std::is_same_v<T,int64_t>) throw std::runtime_error("Only accepts int32_t or int64_t type");
 
-		if(convert_to == FloatType::f32) {
-			float t = static_cast<float>(v);
-			if(!is_signed) {
-				return Value{float((uint32_t)t)}; 
+			if(convert_to == FloatType::f32) {
+				float t = static_cast<float>(v);
+				if(!is_signed) {
+					return Value{float((uint32_t)t)}; 
+				}
+				return Value{t};
+			}else {
+				double t = static_cast<double>(v);
+				if(!is_signed) {
+					return Value{double((uint64_t)t)};
+				}
+				return Value{t};
 			}
-			return Value{t};
-		}else {
-			double t = static_cast<double>(v);
-			if(!is_signed) {
-				return Value{double((uint64_t)t)};
-			}
-			return Value{t};
+			throw std::runtime_error("Unreachable");
+
 		}
-		throw std::runtime_error("Unreachable");
-
-	}
 };
 
 bool VM::run_instr(const Instruction& instr) {
@@ -431,7 +435,7 @@ bool VM::run_instr(const Instruction& instr) {
 
 				Value v1 = this->pop().value();
 
-				
+
 				Value res = std::visit(UnaryFloatVisitor{instr.op_kind},v1);
 
 				this->push(res);
@@ -634,21 +638,37 @@ bool VM::run_instr(const Instruction& instr) {
 
 			},
 			[&](const Call& instr) {  
-				FunctionInfo& fn_info = this->functions.at(instr.index);
+				Function& fn = this->functions.at(instr.index);
+				std::vector<ValueType> args = fn.args;
 
-				this->expect_stack(fn_info.args);
+				this->expect_stack(args);
+
+				if(std::holds_alternative<ImportedFunction>(fn.kind)) {
+					std::vector<Value> args_v = {};
+					for(size_t c = 0; c < args.size(); c++) {
+						args_v.push_back(this->pop().value());
+					}
+
+					this->call_imported_fn(std::get<ImportedFunction>(fn.kind),args_v);
+					return true;
+				}
+
+				InternalFunction inf = std::get<InternalFunction>(fn.kind);
+
+				FunctionInfo& fn_info = inf.info;
+				std::vector<ValueType> local_types = inf.locals;
 
 				BlockInfo fn_blk_info = fn_info.block_info;
 				size_t return_to_index = this->ip;
 
 				// Loading arguments supplied to local variables
 				std::vector<Value> locals = {};
-				for(auto it = this->stack.rbegin(); locals.size() != fn_info.args.size(); it++) {
+				for(auto it = this->stack.rbegin(); locals.size() != args.size(); it++) {
 					locals.push_back(*it);
 				}
 
 				// now load the actual declared locals
-				for(auto it = fn_info.locals.begin(); it != fn_info.locals.end(); it++) {
+				for(auto it = local_types.begin(); it != local_types.end(); it++) {
 					locals.push_back(zero_from_value_type(*it));
 				}
 
@@ -738,7 +758,7 @@ bool VM::run_instr(const Instruction& instr) {
 				switch(ic.kind) {
 					case IntConverters::Wrap:  
 						{
-							
+
 							Value v = this->pop_type_or_error(ValueType::i64);
 							int64_t i64_val = std::get<int64_t>(v);
 							int32_t out = (int32_t)(i64_val % (int64_t(2) << 32));
@@ -822,6 +842,7 @@ bool VM::run_instr(const Instruction& instr) {
 
 void VM::run() {
 	while (ip < instructions.size()) {
+		std::cout << "Running instruction " << to_string(instructions[ip]) << "\n";
 		try {
 			if (!run_instr(instructions[ip])) {
 				break;
@@ -876,7 +897,7 @@ void VM::expect_stack_exact(std::vector<ValueType> expected_values) {
 	this->expect_stack(expected_values);
 }
 
-size_t VM::register_function(FunctionInfo f) {
+size_t VM::register_function(Function f) {
 	this->functions.push_back(f);	
 	return this->functions.size() - 1;
 }
@@ -896,4 +917,11 @@ size_t VM::register_global(Value intial_value, bool is_mutable) {
 Value VM::pop_type_or_error(ValueType type) {
 	this->expect_stack(std::vector{type});
 	return this->pop().value();
+}
+
+void VM::call_imported_fn(ImportedFunction& ifn,std::vector<Value> params_v) {
+	val params = to_js_value_vector(params_v);
+	size_t fn_index = ifn.index;
+	val func = val::global("exported_fns")[fn_index];
+	func.call<void>("apply",val::undefined(),params);
 }

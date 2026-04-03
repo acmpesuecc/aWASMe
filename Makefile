@@ -2,9 +2,9 @@ BUILD_DIR := build
 INCLUDE_DIR := include
 SRC_DIR := src
 
-CXX := g++
+CXX := em++
 
-CXXFLAGS := -Wall -Wextra -MMD -MP -std=c++20 -I$(INCLUDE_DIR)
+CXXFLAGS := -Wall -Wextra -MMD -MP -std=c++20 -I$(INCLUDE_DIR) 
 
 ENGINE_SRC := $(SRC_DIR)/engine
 ENGINE_SRC_FILES := $(shell find $(ENGINE_SRC) -name '*.cpp' )
@@ -25,7 +25,8 @@ engine: $(ENGINE_TARGET)
 parser: $(PARSER_TARGET)
 
 $(ENGINE_TARGET): $(ENGINE_OBJ_FILES)
-	$(CXX) $(CXXFLAGS) -o $@ $(ENGINE_OBJ_FILES) 	
+	$(CXX) $(CXXFLAGS) -o engine.js $(ENGINE_OBJ_FILES) -sMODULARIZE=1 -sEXPORTED_FUNCTIONS="['_main','_do_stuff']" -lembind -sNO_DISABLE_EXCEPTION_CATCHING -sEXPORTED_RUNTIME_METHODS=HEAP32
+
 $(PARSER_TARGET): $(PARSER_OBJ_FILES)
 	$(CXX) $(CXXFLAGS) -o $@ $(PARSER_OBJ_FILES) 	
 
