@@ -12,6 +12,8 @@ enum class ValueType {
 	f64 	= 0x7C,
 };
 
+
+
 ValueType to_value_type(Value);
 Value zero_from_value_type(ValueType);
 
