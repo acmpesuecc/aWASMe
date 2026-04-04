@@ -10,11 +10,12 @@ void validate_Function(std::vector<Module::Function> functions,std::vector<Modul
         Module::Function *func = &functions[current_func];
         std::cout<<"Function at index "<<current_func<<" is using signature from index"<<(int)func->typeIndex<<std::endl;
         std::stack<ValueType> ValueStack;
+        std::stack<Scope> ScopeStack;//for blocks
         std::vector<ValueType> parms = types[func->typeIndex].params;
         std::vector<ValueType> returns = types[func->typeIndex].returns;
         std::vector<Instruction> code = func->code;
         std::cout<<"Parm count"<<parms.size()<<"\nLocal coun "<<func->locals.size()<<"\nCOUNT: ";
-        for(Instruction i:code)
+        for(Instruction &i:code)
         {
             if(std::holds_alternative<Local>(i))
             {
@@ -50,13 +51,15 @@ void validate_Function(std::vector<Module::Function> functions,std::vector<Modul
                         std::cout<<"local.set Validation passed \n";
                         ValueStack.pop();
                     }
-                    else
+                    else if(func->locals.size()>local->index-parms.size())
                     {
                         std::cout<<"Local.set on Local at index"<<local->index-parms.size()<<std::endl;
                         if(func->locals[local->index-parms.size()]==top)
                         std::cout<<"local.set Validation passed \n";
                         ValueStack.pop();
                     }
+                    else
+                    std::cout<<"LOCAL SET FAILED\n";
                     break;
                 }
                 case Local::Kind::Tee:
@@ -73,17 +76,99 @@ void validate_Function(std::vector<Module::Function> functions,std::vector<Modul
                         if(parms[local->index]==top)
                         std::cout<<"local.tee Validation passed \n";
                     }
-                    else
+                    else if(func->locals.size()>local->index-parms.size())
                     {
                         std::cout<<"Local.set on Local at index"<<local->index-parms.size()<<std::endl;
                         if(func->locals[local->index-parms.size()]==top)
                         std::cout<<"local.tee Validation passed \n";
                     }
+                    else
+                    std::cout<<"LOCAL TEE FAILED\n";
                     break;
                 }
                 
                 default:
                     break;
+                }
+            }
+            else if(std::holds_alternative<LoadConst>(i))
+            {
+                //int32_t,int64_t,float,double
+                LoadConst *instr = &std::get<LoadConst>(i);
+                if(std::holds_alternative<int32_t>(instr->value))
+                    ValueStack.push(ValueType::i32);
+                else if(std::holds_alternative<int64_t>(instr->value))
+                    ValueStack.push(ValueType::i64);
+                else if(std::holds_alternative<float>(instr->value))
+                    ValueStack.push(ValueType::f32);
+                else if(std::holds_alternative<double>(instr->value))
+                    ValueStack.push(ValueType::f64);
+                
+                std::cout<<"Pushed Const\n";
+            }
+            else if(std::holds_alternative<Return>(i))
+            {
+                if(returns.empty())
+                {
+                    std::cout<<"RETURNS VOID\n";
+                }
+                else
+                {
+                    if(ValueStack.empty())
+                    std::cout<<"Invalid stack empty\n";
+                    else if(ValueStack.top()==returns[0])
+                    {
+                        std::cout<<"Return Valid\n";
+                    }
+                    else
+                    std::cout<<"Return Invalid\n";
+                }
+            }
+            else if(std::holds_alternative<Scope>(i))
+            {
+                Scope *scope=&std::get<Scope>(i);
+                if(scope->kind==Scope::Kind::If)
+                {
+                    if(ValueStack.empty()||ValueStack.top()!=ValueType::i32)
+                    {
+                        std::cout<<"Scope INValid(if)\n";
+                        break;
+                    }
+                    ValueStack.pop();
+                }
+                ScopeStack.push(*scope);
+                std::cout<<"Scope Pushed\n";
+            }
+            else if(std::holds_alternative<End>(i))
+            {
+                if(ScopeStack.empty())
+                {
+                    std::cout<<"Function end\n";
+                    break;
+                }
+                Scope scopeTop= ScopeStack.top();
+                if(scopeTop.info.return_type.has_value())
+                {
+                    if(ValueStack.empty() || ValueStack.top() != scopeTop.info.return_type.value())
+                    {
+                        std::cout<<"INVALID: block return type mismatch\n";
+                    }
+                    else
+                    {
+                        std::cout<<"block end valid\n";
+                        ValueStack.pop();
+                    }
+                }
+                if(!(scopeTop.else_info.has_value() && scopeTop.kind == Scope::Kind::If))
+                {
+                    ScopeStack.pop();
+                    // push result type back for parent scope to consume
+                    if(scopeTop.info.return_type.has_value())
+                    ValueStack.push(scopeTop.info.return_type.value());
+                }
+                else
+                {
+                    ScopeStack.top().else_info = std::nullopt; // clear so next End pops
                 }
             }
             //INT & FLOAT ARITHMETIC && BINARY BITWISE && BINARY FLOAT.
@@ -100,74 +185,53 @@ void validate_Function(std::vector<Module::Function> functions,std::vector<Modul
                 ValueStack.pop();
                 if(top1==top2)
                 {
-                    if(std::holds_alternative<IntArithmetic>(i))
-                    {
-                        IntArithmetic *instr =&std::get<IntArithmetic>(i);
-                        if(instr->num_type==IntType::i32&&top1==ValueType::i32)
-                        {
-                            std::cout<<"Valid(i32)\n";
-                            ValueStack.push(ValueType::i32);
-                        }  
-                        else if(instr->num_type==IntType::i64&&top1==ValueType::i64)
-                        {
-                            std::cout<<"Valid(i64)\n";
-                            ValueStack.push(ValueType::i64);
-                        }
-                        else
-                        {
-                            std::cout << "top1: " << (int)top1 << " top2: " << (int)top2 << " instr num_type: " << (int)instr->num_type << "\n";
-                            std::cout<<"Validation failed(intArithmetic)\n";
-                        }
-                    }
-                    else if(std::holds_alternative<FloatArithmetic>(i))
-                    {
-                        FloatArithmetic *instr=&std::get<FloatArithmetic>(i);
-                        if(instr->num_type==FloatType::f32&&top1==ValueType::f32)
-                        {
-                            std::cout<<"Valid(f32)\n";
-                            ValueStack.push(ValueType::f32);
-                        }  
-                        else if(instr->num_type==FloatType::f64&&top1==ValueType::f64)
-                        {
-                            std::cout<<"Valid(f64)\n";
-                            ValueStack.push(ValueType::f64);
-                        }
-                        else
-                        std::cout<<"Validation failed(FloatArithmetic)\n";     
-                    }   
-                    else if(std::holds_alternative<BinaryFloat>(i))
-                    {
-                        BinaryFloat *instr =&std::get<BinaryFloat>(i);
-                        if(instr->num_type==FloatType::f32&& top1==ValueType::f32)
-                        std::cout<<"Valid(binary_f32)\n";
-                        else if(instr->num_type==FloatType::f64&& top1==ValueType::f64)
-                        std::cout<<"Valid(binary_f64)\n";
 
-                        ValueStack.push(ValueType::i32);
-                    }    
-                    else if(std::holds_alternative<BinaryBitwise>(i))
+                    auto validateInt = [&](IntType num_type, bool fixedResult = false) 
                     {
-                        BinaryBitwise *instr =&std::get<BinaryBitwise>(i);
-                        //same as IntArthematic (could be made better)
-                        if(instr->num_type==IntType::i32&&top1==ValueType::i32)
+                        auto it = intMap.find(num_type);
+                        if (it != intMap.end() && top1 == it->second)
                         {
-                            std::cout<<"Valid(i32)\n";
-                            ValueStack.push(ValueType::i32);
-                        }  
-                        else if(instr->num_type==IntType::i64&&top1==ValueType::i64)
+                            ValueStack.push(fixedResult ? ValueType::i32 : it->second);
+                            std::cout << "Valid\n";
+                        } 
+                        else 
+                        std::cout << "VALIDATION FAILED: int type mismatch\n";
+                    };
+
+                    auto validateFloat = [&](FloatType num_type, bool fixedResult = false)
+                    {
+                        auto it = floatMap.find(num_type);
+                        if (it != floatMap.end() && top1 == it->second) 
                         {
-                            std::cout<<"Valid(i64)\n";
-                            ValueStack.push(ValueType::i64);
+                            ValueStack.push(fixedResult ? ValueType::i32 : it->second);
+                            std::cout << "Valid\n";
                         }
                         else
-                        {
-                            std::cout << "top1: " << (int)top1 << " top2: " << (int)top2 << " instr num_type: " << (int)instr->num_type << "\n";
-                            std::cout<<"Validation failed(BINARY BITWISE)\n";
-                        }
-                    }             
+                        std::cout << "VALIDATION FAILED: float type mismatch\n";
+                    };
+
+                    if (std::holds_alternative<IntArithmetic>(i))
+                        validateInt(std::get<IntArithmetic>(i).num_type);
+                        
+                    else if (std::holds_alternative<BinaryBitwise>(i))
+                        validateInt(std::get<BinaryBitwise>(i).num_type);
+                    
+                    else if (std::holds_alternative<IntCmp>(i))
+                        validateInt(std::get<IntCmp>(i).num_type, true);
+                
+                    else if (std::holds_alternative<FloatArithmetic>(i))
+                        validateFloat(std::get<FloatArithmetic>(i).num_type);
+            
+                    else if (std::holds_alternative<BinaryFloat>(i))
+                        validateFloat(std::get<BinaryFloat>(i).num_type, true);
+            
+                    else if (std::holds_alternative<FloatCmp>(i))
+                         validateFloat(std::get<FloatCmp>(i).num_type, true);
                 }
+                ///
                 else
-                std::cout<<"Validation failed (Stack ele do not match type)\n";
+                std::cout<<"Elements do not match\n";
+                                      
                 
             }
             //INT AND FLOAT UNARY
@@ -176,7 +240,10 @@ void validate_Function(std::vector<Module::Function> functions,std::vector<Modul
                 if(validate_Unary(ValueStack,i));
             }
             else
-            std::cout<<"OTHER INSTR\n";
+            {
+                std::cout<<"OTHER INSTR\n";
+            }
+            
         }
         current_func++;
         std::cout<<"----------------------------------------------------------------------\n";
@@ -184,7 +251,7 @@ void validate_Function(std::vector<Module::Function> functions,std::vector<Modul
 }
 
 
-bool validate_Unary(std::stack<ValueType> &ValueStack, Instruction i)
+bool validate_Unary(std::stack<ValueType> &ValueStack, Instruction &i)
 {
     if(ValueStack.empty())
     {
