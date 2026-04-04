@@ -49,7 +49,7 @@ class VM {
 		void run();
 
 		// Registers a function into the VM and returns the index which will be used to refer to it.
-		size_t register_function(FunctionInfo f);
+		size_t register_function(Function f);
 
 		/// Returns the index of the registered global
 	 	size_t register_global(Value initial_value,bool is_mutable);
@@ -62,14 +62,13 @@ class VM {
 
 		std::vector<ControlFrame> control_frames;
 
-		// Currently, only stores WASM functions and not imported ones
-		// NOTE: In the future when imported functions are supported, external functions must occupy lower indicies than WASM defined functions. In other words, register all imported functions first, then WASM defined one
-		std::vector<FunctionInfo> functions; 
+		// NOTE: imported functions must occupy lower indicies than WASM defined functions. In other words, register all imported functions first, then WASM defined one
+		std::vector<Function> functions; 
 
 		std::vector<GlobalVar> globals;
 
 		// Linear memory (single default memory)
-		static constexpr size_t PAGE_SIZE = 65536; // 64 KiB
+		// static constexpr size_t PAGE_SIZE = 65536; // 64 KiB  (Already defined in emscripten libraries)
 		static constexpr size_t DEFAULT_MAX_MEMORY_PAGES = 65536; // up to 4 GiB
 		std::vector<uint8_t> memory;
 		size_t max_memory_pages = DEFAULT_MAX_MEMORY_PAGES;
@@ -92,4 +91,6 @@ class VM {
 		/// Sets the ip to the given ip after performing bounds checking. If given index >= current number of instructions then InvalidInstructionPointer exception is thrown
 		void set_ip(size_t index);
 
+
+		std::optional<Value> call_imported_fn(ImportedFunction&,std::vector<Value>);
 };

@@ -1,13 +1,16 @@
 #include<stdexcept>
-#include<iostream>
 #include<cmath>
 #include<bit>
 #include<type_traits>
 #include<optional>
+#include<emscripten.h>
+#include<emscripten/val.h>
 #include<cstring>
 
 #include "engine/vm.hpp"
 #include "engine/errors.hpp"
+
+using val = emscripten::val;
 
 // Load a scalar value of type T from linear memory at the given byte address.
 // Bound-checks and interprets bytes as little-endian.
@@ -71,7 +74,7 @@ std::optional<ActivationRecord*> ControlFrame::get_activation_record_ptr() {
 }
 
 size_t ControlFrame::get_end() {
-	if(this->is_activation_record()) return std::get<ActivationRecord>(this->inner).get_func_info().block_info.block_end;
+	if(this->is_activation_record()) return std::get<ActivationRecord>(this->inner).get_func_block_info().block_end;
 	return std::get<Block>(this->inner).info.block_end;
 }
 
@@ -245,12 +248,12 @@ struct BinaryFloatVisitor {
 	BinaryFloat::Kind op_kind;
 
 	template<typename T, typename U>
-	Value operator()(const T& a, const U& b) {
+		Value operator()(const T& a, const U& b) {
 			(void)a;
 			(void)b;
 			throw std::runtime_error("Type mismatch");
 			return {};
-	}
+		}
 
 	template <typename T>
 		Value operator()(const T& a,const T& b) {
@@ -272,12 +275,12 @@ struct BinaryBitwiseVisitor {
 
 
 	template<typename T, typename U>
-	Value operator()(const T& a, const U& b) {
+		Value operator()(const T& a, const U& b) {
 			(void)a;
 			(void)b;
 			throw std::runtime_error("Type mismatch");
 			return {};
-	}
+		}
 
 
 	template <typename T>
@@ -337,25 +340,25 @@ struct FloatToIntTruncVisitor {
 	bool is_signed;
 
 	template<typename T>
-	Value operator()(const T& v) {
-		if(!std::is_same_v<T,float> && !std::is_same_v<T,double>) throw std::runtime_error("Only accepts float or double type");
+		Value operator()(const T& v) {
+			if(!std::is_same_v<T,float> && !std::is_same_v<T,double>) throw std::runtime_error("Only accepts float or double type");
 
-		if(convert_to == IntType::i32) {
-			int32_t t = static_cast<int32_t>(v);
-			if(!is_signed) {
-				return Value{int32_t((uint32_t)t)}; // TODO: raise a trap if this is outside [0,2^32]?
+			if(convert_to == IntType::i32) {
+				int32_t t = static_cast<int32_t>(v);
+				if(!is_signed) {
+					return Value{int32_t((uint32_t)t)}; // TODO: raise a trap if this is outside [0,2^32]?
+				}
+				return Value{t};
+			}else {
+				int64_t t = static_cast<int64_t>(v);
+				if(!is_signed) {
+					return Value{int64_t((uint64_t)t)};// TODO: raise a trap if this is outside [0,2^64]?
+				}
+				return Value{t};
 			}
-			return Value{t};
-		}else {
-			int64_t t = static_cast<int64_t>(v);
-			if(!is_signed) {
-				return Value{int64_t((uint64_t)t)};// TODO: raise a trap if this is outside [0,2^64]?
-			}
-			return Value{t};
+			throw std::runtime_error("Unreachable");
+
 		}
-		throw std::runtime_error("Unreachable");
-
-	}
 };
 
 struct IntToFloatVisitor {
@@ -363,25 +366,25 @@ struct IntToFloatVisitor {
 	bool is_signed;
 
 	template<typename T>
-	Value operator()(const T& v) {
-		if(!std::is_same_v<T,int32_t> && !std::is_same_v<T,int64_t>) throw std::runtime_error("Only accepts int32_t or int64_t type");
+		Value operator()(const T& v) {
+			if(!std::is_same_v<T,int32_t> && !std::is_same_v<T,int64_t>) throw std::runtime_error("Only accepts int32_t or int64_t type");
 
-		if(convert_to == FloatType::f32) {
-			float t = static_cast<float>(v);
-			if(!is_signed) {
-				return Value{float((uint32_t)t)}; 
+			if(convert_to == FloatType::f32) {
+				float t = static_cast<float>(v);
+				if(!is_signed) {
+					return Value{float((uint32_t)t)}; 
+				}
+				return Value{t};
+			}else {
+				double t = static_cast<double>(v);
+				if(!is_signed) {
+					return Value{double((uint64_t)t)};
+				}
+				return Value{t};
 			}
-			return Value{t};
-		}else {
-			double t = static_cast<double>(v);
-			if(!is_signed) {
-				return Value{double((uint64_t)t)};
-			}
-			return Value{t};
+			throw std::runtime_error("Unreachable");
+
 		}
-		throw std::runtime_error("Unreachable");
-
-	}
 };
 
 bool VM::run_instr(const Instruction& instr) {
@@ -456,7 +459,7 @@ bool VM::run_instr(const Instruction& instr) {
 
 				Value v1 = this->pop().value();
 
-				
+
 				Value res = std::visit(UnaryFloatVisitor{instr.op_kind},v1);
 
 				this->push(res);
@@ -659,25 +662,50 @@ bool VM::run_instr(const Instruction& instr) {
 
 			},
 			[&](const Call& instr) {  
-				FunctionInfo& fn_info = this->functions.at(instr.index);
+				Function& fn = this->functions.at(instr.index);
+				std::vector<ValueType> args = fn.args;
 
-				this->expect_stack(fn_info.args);
+				this->expect_stack(args);
 
-				BlockInfo fn_blk_info = fn_info.block_info;
+				if(std::holds_alternative<ImportedFunction>(fn.kind)) {
+					std::vector<Value> args_v = {};
+					for(size_t c = 0; c < args.size(); c++) {
+						args_v.push_back(this->pop().value());
+					}
+
+					ImportedFunction inf = std::get<ImportedFunction>(fn.kind);
+					std::optional<Value> rtv = this->call_imported_fn(inf,args_v);
+					if(rtv.has_value() != inf.return_type.has_value()) {
+						// TODO: make this better and  (maybe) create custom error type instead of runtime_error
+						if(inf.return_type.has_value()) {
+							throw std::runtime_error(std::string("Expected return type ") + to_string(inf.return_type.value()) + ", found none");
+						}
+						throw std::runtime_error(std::string("Expected no return type, found ") + to_string(to_value_type(rtv.value())));
+					}
+
+					if(rtv.has_value()) this->push(rtv.value());
+
+					return true;
+				}
+
+				InternalFunction inf = std::get<InternalFunction>(fn.kind);
+
+				BlockInfo& fn_blk_info = inf.block_info;
+				std::vector<ValueType> local_types = inf.locals;
 				size_t return_to_index = this->ip;
 
 				// Loading arguments supplied to local variables
 				std::vector<Value> locals = {};
-				for(auto it = this->stack.rbegin(); locals.size() != fn_info.args.size(); it++) {
+				for(auto it = this->stack.rbegin(); locals.size() != args.size(); it++) {
 					locals.push_back(*it);
 				}
 
 				// now load the actual declared locals
-				for(auto it = fn_info.locals.begin(); it != fn_info.locals.end(); it++) {
+				for(auto it = local_types.begin(); it != local_types.end(); it++) {
 					locals.push_back(zero_from_value_type(*it));
 				}
 
-				ActivationRecord a = ActivationRecord(fn_info, locals);
+				ActivationRecord a = ActivationRecord(fn_blk_info, locals);
 				a.return_to = return_to_index;
 				ControlFrame cf = ControlFrame(a,this->stack.size());
 				this->control_frames.push_back(cf);	
@@ -751,7 +779,6 @@ bool VM::run_instr(const Instruction& instr) {
 							}
 							this->expect_stack(std::vector<ValueType>{to_value_type(g.value)});
 							auto t = this->pop().value();
-							std::cout<< std::get<int32_t>(t) << std::endl;
 
 							this->globals[global.index].value = t;
 							break;
@@ -763,7 +790,7 @@ bool VM::run_instr(const Instruction& instr) {
 				switch(ic.kind) {
 					case IntConverters::Wrap:  
 						{
-							
+
 							Value v = this->pop_type_or_error(ValueType::i64);
 							int64_t i64_val = std::get<int64_t>(v);
 							int32_t out = (int32_t)(i64_val % (int64_t(2) << 32));
@@ -1182,7 +1209,7 @@ void VM::expect_stack_exact(std::vector<ValueType> expected_values) {
 	this->expect_stack(expected_values);
 }
 
-size_t VM::register_function(FunctionInfo f) {
+size_t VM::register_function(Function f) {
 	this->functions.push_back(f);	
 	return this->functions.size() - 1;
 }
@@ -1202,4 +1229,20 @@ size_t VM::register_global(Value intial_value, bool is_mutable) {
 Value VM::pop_type_or_error(ValueType type) {
 	this->expect_stack(std::vector{type});
 	return this->pop().value();
+}
+
+std::optional<Value> VM::call_imported_fn(ImportedFunction& ifn,std::vector<Value> params_v) {
+	size_t fn_index = ifn.index;
+
+	std::optional<ValueType> return_type = ifn.return_type;
+	val params = to_js_value_vector(params_v);
+
+	val func = val::global(EXPORTED_FNS)[fn_index];
+
+	auto rval = func.call<val>("apply",val::undefined(),params); // this translates to func(...params)
+
+	if(rval.isUndefined() || rval.isNull()) return {};
+	if(return_type.has_value()) 
+		return from_js_value(rval,return_type.value());
+	return {};
 }
