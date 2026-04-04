@@ -86,8 +86,8 @@ void validate_Function(std::vector<Module::Function> functions,std::vector<Modul
                     break;
                 }
             }
-            //INT & FLOAT ARITHMETIC && BINARY BITWISE && BINARY FLOAT
-            else if(std::holds_alternative<IntArithmetic>(i)||std::holds_alternative<FloatArithmetic>(i)||std::holds_alternative<BinaryBitwise>(i)||std::holds_alternative<BinaryFloat>(i))
+            //INT & FLOAT ARITHMETIC && BINARY BITWISE && BINARY FLOAT.
+            else if(std::holds_alternative<IntArithmetic>(i)||std::holds_alternative<FloatArithmetic>(i)||std::holds_alternative<BinaryBitwise>(i)||std::holds_alternative<BinaryFloat>(i)||std::holds_alternative<IntCmp>(i)||std::holds_alternative<FloatCmp>(i))
             {
                 if(ValueStack.size()<2)
                 {
@@ -173,33 +173,7 @@ void validate_Function(std::vector<Module::Function> functions,std::vector<Modul
             //INT AND FLOAT UNARY
             else if(std::holds_alternative<UnaryInt>(i)||std::holds_alternative<UnaryFloat>(i))
             {
-                if(ValueStack.empty())
-                {
-                    std::cout<<"INVALID (stack empty)\n";
-                    break;
-                }
-                ValueType top = ValueStack.top();
-                if(std::holds_alternative<UnaryInt>(i))
-                {
-                    UnaryInt *instr =&std::get<UnaryInt>(i);
-                    if(instr->num_type==IntType::i32&&top==ValueType::i32)
-                    std::cout<<"Valid(U_i32)\n";
-                    else if(instr->num_type==IntType::i64&&top==ValueType::i64)
-                    std::cout<<"Valid(U_i64)\n";
-                    else
-                    std::cout<<"INVALID (Unary_I)\n";
-
-                }
-                else
-                {
-                    UnaryFloat *instr =&std::get<UnaryFloat>(i);
-                    if(instr->num_type==FloatType::f32&&top==ValueType::f32)
-                    std::cout<<"Valid(U_f32)\n";
-                    else if(instr->num_type==FloatType::f64&&top==ValueType::f64)
-                    std::cout<<"Valid(U_f64)\n";
-                    else
-                    std::cout<<"INVALID (Unary_F)\n";
-                }
+                if(validate_Unary(ValueStack,i));
             }
             else
             std::cout<<"OTHER INSTR\n";
@@ -209,3 +183,40 @@ void validate_Function(std::vector<Module::Function> functions,std::vector<Modul
     }
 }
 
+
+bool validate_Unary(std::stack<ValueType> &ValueStack, Instruction i)
+{
+    if(ValueStack.empty())
+    {
+        std::cout<<"INVALID (stack empty)\n";
+        return false;
+    }
+    ValueType top = ValueStack.top();
+    if(std::holds_alternative<UnaryInt>(i))
+    {
+        UnaryInt *instr =&std::get<UnaryInt>(i);
+        if(instr->num_type==IntType::i32&&top==ValueType::i32)
+        std::cout<<"Valid(U_i32)\n";
+        else if(instr->num_type==IntType::i64&&top==ValueType::i64)
+        std::cout<<"Valid(U_i64)\n";
+        else
+        {
+            std::cout<<"INVALID (Unary_I)\n";
+            return false;
+        }
+    }
+    else
+    {
+        UnaryFloat *instr =&std::get<UnaryFloat>(i);
+        if(instr->num_type==FloatType::f32&&top==ValueType::f32)
+        std::cout<<"Valid(U_f32)\n";
+        else if(instr->num_type==FloatType::f64&&top==ValueType::f64)
+        std::cout<<"Valid(U_f64)\n";
+        else
+        {
+            std::cout<<"INVALID (Unary_F)\n";
+            return false;
+        }
+    }
+    return true;
+}
