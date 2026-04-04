@@ -226,7 +226,7 @@ std::vector<Instruction> parse_code(std::span<const uint8_t> data, size_t& offse
             //These opcodes do take arguments from the wasm binary
             case InstrCategory::Call:
             {
-                size_t arg = leb128_decode(data, codeSize, offset);
+                size_t arg = leb128_decode(data, offset, 32, false);
                 instructions.push_back(Call{.index = arg});
                 ++instrvectorEnd;
                 break;
@@ -1159,7 +1159,7 @@ Instruction parse_ReinterpretBits(Instr opcode)
 Instruction parse_Br(std::span<const uint8_t> data, size_t codeSize, size_t& offset, Instr opcode)
 {
     Br instr{};
-    size_t arg = leb128_decode(data, codeSize, offset);
+    size_t arg = leb128_decode(data, offset, 32, false);
     instr.index = arg;
     switch(opcode) 
     {
@@ -1189,13 +1189,13 @@ Instruction parse_LoadConst(std::span<const uint8_t> data, size_t codeSize, size
     {
         case Instr::I32_CONST:
         {
-		    int32_t arg = static_cast<int32_t>(leb128_decode(data, codeSize, offset));
+		    int32_t arg = static_cast<int32_t>(leb128_decode(data, offset, 32, true) & 0xFFFFFFFF);
             instr.value = arg;
             break;
         }
         case Instr::I64_CONST:
         {
-		    int64_t arg = static_cast<int64_t>(leb128_decode(data, codeSize, offset));
+		    int64_t arg = static_cast<int64_t>(leb128_decode(data, offset, 64, true) & 0xFFFFFFFFFFFFFFFF);
             instr.value = arg;
             break;
         }
@@ -1205,7 +1205,7 @@ Instruction parse_LoadConst(std::span<const uint8_t> data, size_t codeSize, size
 			uint32_t bits = 0;
 			for (int i = 0; i<=3; i++) {
 				bits |= static_cast<uint32_t>(data[offset]) << 8*i;
-				offset++;
+				++offset;
 			}
 			float arg;
 			std::memcpy(&arg, &bits, sizeof(float));
@@ -1218,7 +1218,7 @@ Instruction parse_LoadConst(std::span<const uint8_t> data, size_t codeSize, size
 			uint64_t bits = 0;
 			for (int i = 0; i<=7; i++) {
 				bits |= static_cast<uint32_t>(data[offset]) << 8*i;
-				offset++;
+				++offset;
 			}
 			double arg;
 			std::memcpy(&arg, &bits, sizeof(double));
@@ -1283,7 +1283,7 @@ Instruction parse_Scope(std::span<const uint8_t> data, size_t codeSize, size_t& 
 Instruction parse_Local(std::span<const uint8_t> data, size_t codeSize, size_t& offset, Instr opcode)
 {
     Local instr{};
-    size_t arg = leb128_decode(data, codeSize, offset);
+    size_t arg = leb128_decode(data, offset, 32, false);
     instr.index = arg;
     switch (opcode)
     {
@@ -1314,7 +1314,7 @@ Instruction parse_Local(std::span<const uint8_t> data, size_t codeSize, size_t& 
 Instruction parse_Global(std::span<const uint8_t> data, size_t codeSize, size_t&  offset, Instr opcode)
 {
     Global instr{};
-    size_t arg = leb128_decode(data, codeSize, offset);
+    size_t arg = leb128_decode(data, offset, 32, false);
     instr.index = arg;
 
     switch (opcode)

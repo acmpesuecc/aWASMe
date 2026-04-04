@@ -215,7 +215,7 @@ Instruction parse_Global(std::span<const uint8_t> data, size_t codeSize, size_t&
 Instruction parse_Br(std::span<const uint8_t> data, size_t codeSize, size_t& offset, Instr opcode);
 
 //Helper to read leb128 values (defined in parser.cpp)
-size_t leb128_decode(std::span<const uint8_t> data, size_t size, size_t& offset);
+size_t leb128_decode(std::span<const uint8_t> data, size_t& offset, int num_bits, bool is_signed);
 
 //Debugging helper to print opcodes onto the screen (defined in parser.cpp)
 void print_string_of_opcode(Instr opcode);

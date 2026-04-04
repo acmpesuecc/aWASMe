@@ -59,7 +59,7 @@ class Module
 
 	struct Function
 	{
-		uint8_t typeIndex;
+		size_t typeIndex;
 		struct LocalData localCounts;
 		std::vector<Instruction> code;
 		std::vector<ValueType> locals;
@@ -102,7 +102,7 @@ class Module
 
 	//MODULE STRUCTURE
 	std::vector<Function> functions;      
-	std::optional<uint32_t> start_function;	
+	std::optional<size_t> start_function;	
 	std::vector<Global> globals;	
 	std::vector<Type> types;
 	std::vector<MemoryInterface> memories; 
