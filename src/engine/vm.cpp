@@ -50,7 +50,7 @@ std::optional<ActivationRecord*> ControlFrame::get_activation_record_ptr() {
 }
 
 size_t ControlFrame::get_end() {
-	if(this->is_activation_record()) return std::get<ActivationRecord>(this->inner).get_func_info().block_info.block_end;
+	if(this->is_activation_record()) return std::get<ActivationRecord>(this->inner).get_func_block_info().block_end;
 	return std::get<Block>(this->inner).info.block_end;
 }
 
@@ -665,10 +665,8 @@ bool VM::run_instr(const Instruction& instr) {
 
 				InternalFunction inf = std::get<InternalFunction>(fn.kind);
 
-				FunctionInfo& fn_info = inf.info;
+				BlockInfo& fn_blk_info = inf.block_info;
 				std::vector<ValueType> local_types = inf.locals;
-
-				BlockInfo fn_blk_info = fn_info.block_info;
 				size_t return_to_index = this->ip;
 
 				// Loading arguments supplied to local variables
@@ -682,7 +680,7 @@ bool VM::run_instr(const Instruction& instr) {
 					locals.push_back(zero_from_value_type(*it));
 				}
 
-				ActivationRecord a = ActivationRecord(fn_info, locals);
+				ActivationRecord a = ActivationRecord(fn_blk_info, locals);
 				a.return_to = return_to_index;
 				ControlFrame cf = ControlFrame(a,this->stack.size());
 				this->control_frames.push_back(cf);	
@@ -928,11 +926,15 @@ Value VM::pop_type_or_error(ValueType type) {
 }
 
 std::optional<Value> VM::call_imported_fn(ImportedFunction& ifn,std::vector<Value> params_v) {
+	size_t fn_index = ifn.index;
+
 	std::optional<ValueType> return_type = ifn.return_type;
 	val params = to_js_value_vector(params_v);
-	size_t fn_index = ifn.index;
-	val func = val::global("exported_fns")[fn_index];
-	auto rval = func.call<val>("apply",val::undefined(),params);
+
+	val func = val::global(EXPORTED_FNS)[fn_index];
+
+	auto rval = func.call<val>("apply",val::undefined(),params); // this translates to func(...params)
+
 	if(rval.isUndefined() || rval.isNull()) return {};
 	if(return_type.has_value()) 
 		return from_js_value(rval,return_type.value());
