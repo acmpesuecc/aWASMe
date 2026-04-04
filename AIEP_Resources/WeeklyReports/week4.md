@@ -18,3 +18,15 @@
    - Host Functions using [embind](https://emscripten.org/docs/porting/connecting_cpp_and_javascript/embind.html#)
    - Testing with actual code
    - UI, if possible
+
+## Aston's Progress
+- Fixed argument loading order in ``src/engine/main.cpp``
+- Handled floating point division
+- Added support for ``br_if`` instruction
+- Implemented Global variables
+- Added conversion instructions
+  - Conversion from floats to floats, ints to ints and floats to ints and the other way around
+### Next Week
+- Support imported functions
+  - call imported JS functions from C++/VM using [embind](https://emscripten.org/docs/porting/connecting_cpp_and_javascript/embind.html#)
+  - Handle returning values from JS functions
