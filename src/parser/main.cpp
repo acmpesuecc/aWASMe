@@ -1,5 +1,5 @@
 /* To execute: 
-	g++ -std=c++20 -I./include src/parser/main.cpp src/parser/parser.cpp src/parser/codeparsing.cpp -o parser.exe
+	g++ -std=c++20 -I./include src/parser/main.cpp src/parser/parser.cpp src/parser/codeparsing.cpp src/parser/stackValidator.cpp -o parser.exe
 	./parser.exe "<path to .wasm file>"
 
 	(or)
@@ -15,6 +15,7 @@
 #include<span>
 #include "module/module.hpp"
 #include "parser/parser.hpp" 
+#include "parser/stackValidator.hpp"
 
 int main (int argc, char* argv[]) {
 	
@@ -46,7 +47,7 @@ int main (int argc, char* argv[]) {
     while (offset < filesize)
     {
         uint8_t Id = data[offset]; //read section ID
-		std::cout << "Section ID: " << (int)Id << std::endl;
+		std::cout << "Section ID: " << std::dec<<(int)Id << std::endl;
 		++offset;
 		secSize = leb128_decode(dataspan, filesize, offset); //read section size - leb128 changes offset globally to be past the integer by itself 
 		std::cout << "Section size (read from wasm file): " << secSize << std::endl;
@@ -107,5 +108,6 @@ int main (int argc, char* argv[]) {
 		
 		offset+=secSize;
     }
+	validate_Function(module.functions,module.types);
 	return 0;
 }

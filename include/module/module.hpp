@@ -61,8 +61,8 @@ class Module
 	{
 		uint8_t typeIndex;
 		struct LocalData localCounts;
-		std::vector<Instruction> code; 
-
+		std::vector<Instruction> code;
+		std::vector<ValueType> locals;
 		Function()
 		{
 			//typeIndex will be initialized during function section parsing

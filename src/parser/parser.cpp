@@ -22,7 +22,6 @@ void parse_code_section(std::span<const uint8_t> data, Module& module)
 		size_t endOfBody = offset + bodySize;
 		size_t numlocaltypes = leb128_decode(data, secSize, offset);
 		std::cout << "Number of types of locals defined: " << numlocaltypes << std::endl;
-
 		Module::Function* current_func = &module.functions[i];
 
 		for (size_t i = 0; i < numlocaltypes; i++)
@@ -30,6 +29,8 @@ void parse_code_section(std::span<const uint8_t> data, Module& module)
 			size_t numlocals_specifictype = leb128_decode(data, secSize, offset);
 			ValueType type = static_cast<ValueType>(data[offset]);
 			std::cout << numlocals_specifictype << " locals with type as ";
+			for (size_t j = 0; j < numlocals_specifictype; j++)
+			current_func->locals.push_back(type); 
 			switch (type) 
 			{
 				case ValueType::i32: 
@@ -60,7 +61,7 @@ void parse_code_section(std::span<const uint8_t> data, Module& module)
 				{
 					std::cout << "(Error - invalid type)" << std::endl;
 					break;
-				}		
+				}	
 			}
 			++offset; //advance offset 
 		}
@@ -76,11 +77,11 @@ void parse_type_section(std::span<const uint8_t> data, Module& module) //current
 	size_t offset = 0;
 	uint32_t typeCount = leb128_decode(data,secSize,offset);
 	std::cout << "TYPE COUNT: " << typeCount << std::endl;
-	Module::Type type_data{};
 
 
 	while (offset < secSize)
 	{
+		Module::Type type_data{};//
 		if (data[offset++] != 0x60)
 		{
 			std::cout << "Type tag not supported (expected 0x60, i.e. function signature)" << std::endl;
@@ -92,6 +93,7 @@ void parse_type_section(std::span<const uint8_t> data, Module& module) //current
 		for(size_t i = 0; i < pramCount; i++)
 		{
 			ValueType pType = static_cast<ValueType>(data[offset++]);
+			std::cout<<(int)pType<<std::endl;
 			type_data.params.push_back(pType);
 		}
 

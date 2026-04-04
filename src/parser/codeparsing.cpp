@@ -46,6 +46,7 @@ std::vector<Instruction> parse_code(std::span<const uint8_t> data, size_t& offse
         std::cout << "Opcode in hex is: " << std::hex << int(data[offset]) << std::endl;
 		++offset;
 		category = Instr_to_Category.at(opcode);
+        print_string_of_opcode(opcode);
         std::cout << "Instr Category number of opcode: " << static_cast<int>(category) << std::endl; 
 		switch (category) {
 			case InstrCategory::UNKNOWN: 
@@ -1260,18 +1261,19 @@ Instruction parse_Scope(std::span<const uint8_t> data, size_t codeSize, size_t& 
         {  
             break;
         }
-
-        //Reading return type of block, loop, or if block
-        if (data[offset] != 0x40) //0x40 means that the block returns nothing 
-        {
-            ValueType type = static_cast<ValueType>(data[offset]);
-            instr.info.return_type = type;
-        }
-        else
-        {
-            instr.info.return_type = std::nullopt;
-        }
     }
+
+    //Reading return type of block, loop, or if block
+    if (data[offset] != 0x40) //0x40 means that the block returns nothing 
+    {
+        ValueType type = static_cast<ValueType>(data[offset]);
+        instr.info.return_type = type;
+    }
+    else
+    {
+        instr.info.return_type = std::nullopt;
+    }
+    
 
     ++offset; //move past the return type
 
