@@ -2,31 +2,31 @@
 #include<fstream>
 #include<vector>
 #include<string>
-#include<cstring> //for std::memcpy()
 #include<span>
 #include "module/module.hpp"
 #include "parser/parser.hpp" 
+#define MAX_WASM_INTEGER_SIZE 8
+#define SIZE_OF_SIZE_T sizeof(size_t)
 
 //Section parsing
-void parse_code_section(std::span<const uint8_t> data, Module& module) 
+int64_t parse_code_section(std::span<const uint8_t> data, Module& module) 
 {
 	size_t secSize = data.size();
 	size_t offset = 0;
-	uint32_t num_funcs = leb128_decode(data, secSize, offset);
+	int64_t num_funcs = static_cast<int64_t>(leb128_decode(data, offset, 32, false));
 	std::cout << "Number of functions defined: " << num_funcs << std::endl;
 	
 	for (size_t i = 0; i < num_funcs; i++) 
 	{
 		std::cout << "Function " << i << std::endl;
-		size_t bodySize = leb128_decode(data, secSize, offset);
-		size_t endOfBody = offset + bodySize;
-		size_t numlocaltypes = leb128_decode(data, secSize, offset);
+		size_t bodySize = leb128_decode(data, offset, 32, false);
+		size_t numlocaltypes = leb128_decode(data, offset, 32, false);
 		std::cout << "Number of types of locals defined: " << numlocaltypes << std::endl;
 		Module::Function* current_func = &module.functions[i];
 
 		for (size_t i = 0; i < numlocaltypes; i++)
 		{
-			size_t numlocals_specifictype = leb128_decode(data, secSize, offset);
+			size_t numlocals_specifictype = leb128_decode(data, offset, 32, false);
 			ValueType type = static_cast<ValueType>(data[offset]);
 			std::cout << numlocals_specifictype << " locals with type as ";
 			for (size_t j = 0; j < numlocals_specifictype; j++)
@@ -60,22 +60,24 @@ void parse_code_section(std::span<const uint8_t> data, Module& module)
 				default: //This should never happen
 				{
 					std::cout << "(Error - invalid type)" << std::endl;
-					break;
-				}	
+					return -1;
+				}		
 			}
 			++offset; //advance offset 
 		}
 
 		current_func->code = parse_code(data, offset);
 	}
+
+	return num_funcs;
 }
 
 //Type section (ID 1)
-void parse_type_section(std::span<const uint8_t> data, Module& module) //currently only supports function signature types
+int64_t parse_type_section(std::span<const uint8_t> data, Module& module) //currently only supports function signature types
 {
 	size_t secSize = data.size();
 	size_t offset = 0;
-	uint32_t typeCount = leb128_decode(data,secSize,offset);
+	int64_t typeCount = static_cast<int64_t>(leb128_decode(data, offset, 32, false));
 	std::cout << "TYPE COUNT: " << typeCount << std::endl;
 
 
@@ -85,10 +87,10 @@ void parse_type_section(std::span<const uint8_t> data, Module& module) //current
 		if (data[offset++] != 0x60)
 		{
 			std::cout << "Type tag not supported (expected 0x60, i.e. function signature)" << std::endl;
-			return;
+			return -1;
 		}
 
-		size_t pramCount = leb128_decode(data, secSize, offset);
+		size_t pramCount = leb128_decode(data, offset, 32, false);
 		std::cout << "Parameter count: " << pramCount << std::endl;
 		for(size_t i = 0; i < pramCount; i++)
 		{
@@ -97,7 +99,7 @@ void parse_type_section(std::span<const uint8_t> data, Module& module) //current
 			type_data.params.push_back(pType);
 		}
 
-		size_t returnCount = leb128_decode(data, secSize, offset);
+		size_t returnCount = leb128_decode(data, offset, 32, false);
 		std::cout << "Return count: " << returnCount << std::endl;
 		for (size_t i=0; i < returnCount; i++)
 		{
@@ -111,24 +113,31 @@ void parse_type_section(std::span<const uint8_t> data, Module& module) //current
 	if (module.types.size() == typeCount) 
 	{
 		std::cout << "Type section parsed successfully - " << typeCount << " types decoded" << std::endl;
+		return typeCount;
 	}
 	else 
 	{
 		std::cout << "Error parsing type section, only " << module.types.size() << " types pushed into module object successfully" << std::endl;
+		return -1;
 	}
 }
 
-void parse_func_section(std::span<const uint8_t> data, Module& module)
+int64_t parse_func_section(std::span<const uint8_t> data, Module& module, int64_t typeCount)
 {
 	size_t secSize = data.size();
 	size_t offset = 0;
-	size_t funcCount = leb128_decode(data,secSize,offset);
+	int64_t funcCount = static_cast<int64_t>(leb128_decode(data, offset, 32, false));
 	std::cout << "Number of functions: " << funcCount << std::endl;
 	int i = 0;
 
-	while(offset<secSize)
+	while(offset < secSize)
 	{
-		size_t index = leb128_decode(data,secSize,offset);
+		size_t index = leb128_decode(data, offset, 32, false);
+		if (index >= typeCount)
+		{
+			std::cout << "Error - invalid type index detected: " << index << ". Total number of types defined was " << typeCount;
+			return -1; 
+		}
 		std::cout << "The function at index " << i << " uses the signature at index " << index << std::endl;
 		Module::Function func{};
 		func.typeIndex = index;
@@ -139,56 +148,95 @@ void parse_func_section(std::span<const uint8_t> data, Module& module)
 	if (module.functions.size() == funcCount)
 	{
 		std::cout << "Function section parsed successfully - " << funcCount << " functions decoded" << std::endl;
+		return funcCount;
 	}
 	else 
 	{
 		std::cout << "Error while parsing function section, only " << module.functions.size() << " functions pushed to module object" << std::endl;
+		return -1;
 	}
-
 }
 
-void parse_start_section(std::span<const uint8_t>data, Module& module)
+int parse_start_section(std::span<const uint8_t> data, Module& module)
 {
 	size_t secSize = data.size();
 	size_t offset = 0;
-	size_t start_index = leb128_decode(data, secSize, offset);
+	size_t start_index = leb128_decode(data, offset, 32, false);
 	std::cout << "Index of start function is: " << start_index <<std::endl;
 	module.start_function = start_index;
+	if (offset != secSize)
+	{
+		std::cout << "Error - start section contains extra data after the start function index." << std::endl;
+		return -1;
+	}
+	return 0;
 }
 
-void parse_global_section(std::span<const uint8_t> data, Module& module)
+int parse_global_section(std::span<const uint8_t> data, Module& module)
 {
 	size_t secSize = data.size();
 	size_t offset = 0;
-	size_t globalCount = leb128_decode(data, secSize, offset);
+	size_t globalCount = leb128_decode(data, offset, 32, false);
 
 	Module::Global global{};
 
 	for (size_t i = 0; i < globalCount; i++)
 	{
 		ValueType gType = static_cast<ValueType>(data[offset++]);
+		std::cout << "Type of global is: ";
+		switch (gType)
+		{
+			case ValueType::i32:
+			{
+				std::cout << "i32" << std::endl;
+				break;
+			}
+			case ValueType::i64:
+			{
+				std::cout << "i64" << std::endl;
+				break;
+			}
+			case ValueType::f32:
+			{
+				std::cout << "f32" << std::endl;
+				break;
+			}
+			case ValueType::f64:
+			{
+				std::cout << "f64" << std::endl;
+				break;
+			}
+			default:
+			{
+				std::cout << "Error - invalid type. Globals currently only support numeric types." << std::endl;
+				return -1;
+			}
+		}
 		global.type = gType;
 		bool mut = data[offset++];
 		global.is_mutable = mut;
 		global.initCode = parse_code(data, offset);
+		/*Todo: validate global section here*/
 		module.globals.push_back(global);
 	}
 
 	if (module.globals.size() == globalCount)
 	{
 		std::cout << "Global section parsed successfully - " << globalCount << " globals decoded" << std::endl;
+		return 0;
 	}
 	else
 	{
 		std::cout << "Error while parsing global section, only " << module.globals.size() << " globals pushed to module object" << std::endl;
+		return -1;
 	}
 }
 
-void parse_mem_section(std::span<const uint8_t> data, Module& module)
+int parse_mem_section(std::span<const uint8_t> data, Module& module)
 {
 	size_t secSize = data.size();
 	size_t offset = 0;
-	size_t MemCount = leb128_decode(data, secSize, offset);
+	size_t MemCount = leb128_decode(data, offset, 32, false);
 
 	Module::MemoryInterface memory{};
 	MemFlag mem_type;
@@ -202,7 +250,7 @@ void parse_mem_section(std::span<const uint8_t> data, Module& module)
 			case MemFlag::Address32_NoMax: 
 			{
 				memory.address_type = IntType::i32;
-				memory.start_page = leb128_decode(data, secSize, offset);
+				memory.start_page = leb128_decode(data, offset, 64, false);
 				memory.end_page = std::nullopt;
 				std::cout << "Address type: 32 bit. No upper limit." << std::endl;
 				std::cout << "Start page in hex: " << std::hex << memory.start_page << std::endl;
@@ -211,8 +259,8 @@ void parse_mem_section(std::span<const uint8_t> data, Module& module)
 			case MemFlag::Address32_MaxExists:
 			{
 				memory.address_type = IntType::i32;
-				memory.start_page = leb128_decode(data, secSize, offset);
-				memory.end_page = leb128_decode(data, secSize, offset);
+				memory.start_page = leb128_decode(data, offset, 64, false);
+				memory.end_page = leb128_decode(data, offset, 64, false);
 				std::cout << "Address type: 32 bit. Upper limit exists." << std::endl;
 				std::cout << "Start, end pages in hex: " << std::hex << memory.start_page << ", " << memory.end_page.value() << std::endl;
 				break;
@@ -220,7 +268,7 @@ void parse_mem_section(std::span<const uint8_t> data, Module& module)
 			case MemFlag::Address64_NoMax:
 			{
 				memory.address_type = IntType::i64;
-				memory.start_page = leb128_decode(data, secSize, offset);
+				memory.start_page = leb128_decode(data, offset, 64, false);
 				memory.end_page = std::nullopt;
 				std::cout << "Address type: 64 bit. No upper limit." << std::endl;
 				std::cout << "Start page in hex: " << std::hex << memory.start_page << std::endl;
@@ -229,8 +277,8 @@ void parse_mem_section(std::span<const uint8_t> data, Module& module)
 			case MemFlag::Address64_MaxExists: 
 			{
 				memory.address_type = IntType::i64;
-				memory.start_page = leb128_decode(data, secSize, offset);
-				memory.end_page = leb128_decode(data, secSize, offset);
+				memory.start_page = leb128_decode(data, offset, 64, false);
+				memory.end_page = leb128_decode(data, offset, 64, false);
 				std::cout << "Address type: 32 bit. Upper limit exists." << std::endl;
 				std::cout << "Start, end pages in hex: " << std::hex << memory.start_page << ", " << memory.end_page.value() << std::endl;
 				break;
@@ -238,7 +286,7 @@ void parse_mem_section(std::span<const uint8_t> data, Module& module)
 			default: 
 			{
 				std::cout << "Error while parsing memory section - invalid memory flags. Flags given were (displayed in hex format): " << std::hex << data[offset] << std::endl;
-				return;
+				return -1;
 			}
 		}
 		++offset;
@@ -249,10 +297,12 @@ void parse_mem_section(std::span<const uint8_t> data, Module& module)
 	if (module.memories.size() == MemCount)
 	{
 		std::cout << "Memory section parsed successfully - " << MemCount << " memories decoded" << std::endl;
+		return 0;
 	}
 	else
 	{
 		std::cout << "Error while parsing memory section, only " << module.memories.size() << " memories pushed into module object" << std::endl;
+		return -1;
 	}
 }
 
@@ -260,28 +310,28 @@ void parse_table_section(std::span<const uint8_t>data,Module& module)
 {
 	size_t secSize =data.size();
 	size_t offset =0;
-	size_t tableCount= leb128_decode(data,secSize,offset);
+	size_t tableCount= leb128_decode(data, offset, 32, false);
 	for(size_t i=0;i<tableCount;i++)
 	{
 		uint8_t refType= data[offset++];
 		std::cout<<"RefType: "<<(refType ==0x70? "funcref\n":"")<<(refType ==0x6F? "externref\n":"");
 		bool hasMax = data[offset++];
-		size_t min = leb128_decode(data,secSize,offset);
+		size_t min = leb128_decode(data, offset, 64, false);
 		size_t max;
 		std::cout<<"Min: "<<min<<std::endl;
 		if(hasMax)
 		{
-		max= leb128_decode(data,secSize,offset);
-		std::cout<<"Max: "<<max<<std::endl;
+			max= leb128_decode(data, offset, 64, false);
+			std::cout<<"Max: "<<max<<std::endl;
 		}
 	}
 }
 
-void parse_import_section(std::span<const uint8_t>data, Module& module)
+int parse_import_section(std::span<const uint8_t>data, Module& module, int64_t typeCount)
 {
 	size_t secSize = data.size();
 	size_t offset = 0;
-	size_t importCount = leb128_decode(data, secSize, offset);
+	size_t importCount = leb128_decode(data, offset, 32, false);
 	std::cout << "Import Count: " << importCount << std::endl;
 
 	Module::Import import{};
@@ -297,22 +347,29 @@ void parse_import_section(std::span<const uint8_t>data, Module& module)
 		import.item_name = itemStr;
 
 
-		ExternalType descTag = static_cast<ExternalType>(data[offset++]);
+		ExternalType descTag = static_cast<ExternalType>(data[offset]);
 		std::cout << "Import type: ";
 		switch (descTag)
 		{
 			case ExternalType::Function:
 			{
 				Module::FunctionInterface func{};
-				func.typeIndex = leb128_decode(data, secSize, offset);
-				std::cout<< "Function. It has type index " << func.typeIndex << std::endl;
+				std::cout<< "Function. It has type index " ;
+				size_t index = leb128_decode(data, offset, 32, false);
+				if (index >= typeCount)
+				{
+					std::cout << "Error - invalid type index detected: " << index << ". Total number of types defined was " << typeCount;
+					return -1; 
+				}
+				std::cout << index << std::endl;
+				func.typeIndex = index;
 				import.interface = Module::ImportInterface{std::in_place_type<Module::FunctionInterface>, func};
 				break;
 			}
 			case ExternalType::Table:
 			{
 				std::cout << "ERROR - table types are not supported currently" << std::endl;
-				return;
+				return -1;
 			}
 			case ExternalType::Memory:
 			{
@@ -325,7 +382,7 @@ void parse_import_section(std::span<const uint8_t>data, Module& module)
 					case MemFlag::Address32_NoMax: 
 					{
 						memory.address_type = IntType::i32;
-						memory.start_page = leb128_decode(data, secSize, offset);
+						memory.start_page = leb128_decode(data, offset, 64, false);
 						memory.end_page = std::nullopt;
 						std::cout << "Address type: 32 bit. No upper limit." << std::endl;
 						std::cout << "Start page in hex: " << std::hex << memory.start_page << std::endl;
@@ -334,8 +391,8 @@ void parse_import_section(std::span<const uint8_t>data, Module& module)
 					case MemFlag::Address32_MaxExists:
 					{
 						memory.address_type = IntType::i32;
-						memory.start_page = leb128_decode(data, secSize, offset);
-						memory.end_page = leb128_decode(data, secSize, offset);
+						memory.start_page = leb128_decode(data, offset, 64, false);
+						memory.end_page = leb128_decode(data, offset, 64, false);
 						std::cout << "Address type: 32 bit. Upper limit exists." << std::endl;
 						std::cout << "Start, end pages in hex: " << std::hex << memory.start_page << ", " << memory.end_page.value() << std::endl;
 						break;
@@ -343,7 +400,7 @@ void parse_import_section(std::span<const uint8_t>data, Module& module)
 					case MemFlag::Address64_NoMax:
 					{
 						memory.address_type = IntType::i64;
-						memory.start_page = leb128_decode(data, secSize, offset);
+						memory.start_page = leb128_decode(data, offset, 64, false);
 						memory.end_page = std::nullopt;
 						std::cout << "Address type: 64 bit. No upper limit." << std::endl;
 						std::cout << "Start page in hex: " << std::hex << memory.start_page << std::endl;
@@ -352,8 +409,8 @@ void parse_import_section(std::span<const uint8_t>data, Module& module)
 					case MemFlag::Address64_MaxExists: 
 					{
 						memory.address_type = IntType::i64;
-						memory.start_page = leb128_decode(data, secSize, offset);
-						memory.end_page = leb128_decode(data, secSize, offset);
+						memory.start_page = leb128_decode(data, offset, 64, false);
+						memory.end_page = leb128_decode(data, offset, 64, false);
 						std::cout << "Address type: 32 bit. Upper limit exists." << std::endl;
 						std::cout << "Start, end pages in hex: " << std::hex << memory.start_page << ", " << memory.end_page.value() << std::endl;
 						break;
@@ -361,7 +418,7 @@ void parse_import_section(std::span<const uint8_t>data, Module& module)
 					default: 
 					{
 						std::cout << "Error while parsing import section - invalid memory flags. Flags given were (displayed in hex format): " << std::hex << data[offset] << std::endl;
-						return;
+						return -1;
 					}
 				}
 				++offset;
@@ -413,11 +470,13 @@ void parse_import_section(std::span<const uint8_t>data, Module& module)
 			case ExternalType::Tag:
 			{
 				std::cout << "ERROR - tag types are not supported currently" << std::endl;
-				return;
+				return -1;
 			}
 			default:
-				break;
+				std::cout << "ERROR - unknown tag type detected: " << (int)data[offset] << std::endl;
+				return -1;
 		}
+		++offset;
 
 		module.imports.push_back(import);
 	}
@@ -425,10 +484,12 @@ void parse_import_section(std::span<const uint8_t>data, Module& module)
 	if (module.imports.size() == importCount)
 	{
 		std::cout << "Import section parsed successfully - " << importCount << " memories decoded" << std::endl;
+		return 0;
 	}
 	else
 	{
 		std::cout << "Error while parsing import section, only " << module.memories.size() << " imports pushed into module object" << std::endl;
+		return -1;
 	}
 }
 
@@ -436,10 +497,10 @@ void parse_element_section(std::span<const uint8_t>data,Module& module)
 {
 	size_t secSize =data.size();
 	size_t offset = 0;
-	size_t subSecCount=leb128_decode(data,secSize,offset);
+	size_t subSecCount=leb128_decode(data, offset, 32, false);
 	for(size_t i =0;i<subSecCount;i++)
 	{
-		Flag flag =static_cast<Flag>(leb128_decode(data,secSize,offset));
+		Flag flag =static_cast<Flag>(leb128_decode(data, offset, 32, false));
 		switch (flag)
 		{
 			case Flag::ActiveImplicit:
@@ -448,9 +509,9 @@ void parse_element_section(std::span<const uint8_t>data,Module& module)
 				uint8_t offsetO=data[offset++];
 				Instr opcode = static_cast<Instr>(offsetO);
 				std::cout<<"OPCODE"<<(opcode==Instr::I32_CONST?" i32.const\n": " Other\n");
-				size_t offsetVal=leb128_decode(data,secSize,offset);
+				size_t offsetVal=leb128_decode(data, offset, 64, false);
 				offset++;//skipping END Byte
-				size_t eleCount =leb128_decode(data,secSize,offset);
+				size_t eleCount =leb128_decode(data, offset, 32, false);
    				std::cout << "Offset: "  << offsetVal<< std::endl;
    				std::cout << "Count: "   << eleCount << std::endl;
 				if(flag==Flag::ActiveImplicit)
@@ -463,14 +524,14 @@ void parse_element_section(std::span<const uint8_t>data,Module& module)
 			case Flag::ActiveExplicit:
 			case Flag::ActiveExplicitExpr:
 			{
-				size_t tableIND=leb128_decode(data,secSize,offset);
+				size_t tableIND=leb128_decode(data, offset, 32, false);
 				uint8_t offsetO=data[offset++];
 				Instr opcode = static_cast<Instr>(offsetO);
 				std::cout<<"OPCODE"<<(opcode==Instr::I32_CONST?"i32.const\n": "Other\n");
 				offset++;//skipping END Byte
 				uint8_t eleKind = data[offset++];//always 0x00
 				std::cout<<"Element kind: "<<(eleKind ==0x00 ?"FuncRef" :"NONE");
-				size_t eleCount = leb128_decode(data,secSize,offset);
+				size_t eleCount = leb128_decode(data, offset, 32, false);
 				if(flag==Flag::ActiveExplicit)
 				parse_function(data,eleCount,offset,secSize,module);
 				else if(flag==Flag::ActiveExplicitExpr)
@@ -484,7 +545,7 @@ void parse_element_section(std::span<const uint8_t>data,Module& module)
 			{
 				uint8_t eleKind =data[offset++];//always 0x00
 				std::cout<<"Element kind: "<<(eleKind ==0x00 ?"FuncRef" :"NONE");
-				size_t eleCount = leb128_decode(data,secSize,offset);
+				size_t eleCount = leb128_decode(data, offset, 32, false);
 				if(flag==Flag::Passive||flag==Flag::Declarative)
 				parse_function(data,eleCount,offset,secSize,module);
 				else if(flag==Flag::DeclarativeExpr||flag==Flag::PassiveExpr)
@@ -501,21 +562,21 @@ void parse_data_section(std::span<const uint8_t>data, Module& module)
 {
 	size_t secSize = data.size();
 	size_t offset = 0;
-	size_t dataCount=leb128_decode(data,secSize,offset);
+	size_t dataCount=leb128_decode(data, offset, 32, false);
 	for(size_t i =0;i<dataCount;i++)
 	{
-		Flag flag =static_cast<Flag>(leb128_decode(data,secSize,offset));
+		Flag flag =static_cast<Flag>(leb128_decode(data, offset, 32, false));
 		size_t byteCount=0;
 		if(flag!=Flag::Passive)
 		{
 			if(flag==Flag::ActiveExplicit)
-			size_t memIND=leb128_decode(data,secSize,offset);
+			size_t memIND=leb128_decode(data, offset, 32, false);
 			uint8_t offsetO=data[offset++];
 			Instr opcode = static_cast<Instr>(offsetO);
 			std::cout<<"OPCODE"<<(opcode==Instr::I32_CONST?" i32.const\n": " Other\n");
-			size_t offsetVal=leb128_decode(data,secSize,offset);
+			size_t offsetVal=leb128_decode(data, offset, 64, false);
 			offset++;//skipping END Byte
-			byteCount=leb128_decode(data,secSize,offset);
+			byteCount=leb128_decode(data, offset, 32, false);
 		}
 
 		for(size_t i=0; i<byteCount;i++)
@@ -527,11 +588,11 @@ void parse_data_section(std::span<const uint8_t>data, Module& module)
 	}
 }
 
-void parse_export_section(std::span<const uint8_t> data, Module& module)
+int parse_export_section(std::span<const uint8_t> data, Module& module)
 {
 	size_t secSize=data.size();
 	size_t offset =0;
-	size_t exportCount=leb128_decode(data,secSize,offset);
+	size_t exportCount = leb128_decode(data, offset, 32, false);
 	std::cout << "Number of exports: " << exportCount << std::endl;
 
 	Module::Export export_item{};
@@ -568,12 +629,13 @@ void parse_export_section(std::span<const uint8_t> data, Module& module)
 			default: //should never happen
 			{
 				std::cout << "Invalid export type tag: " << (int)data[offset] << std::endl;
+				return -1;
 			}
 		} 
 		export_item.type = tag;
 		++offset;
 
-		size_t index = leb128_decode(data, secSize, offset);
+		size_t index = leb128_decode(data, offset, 32, false);
 		std::cout << "Index: " << index << std::endl;
 		export_item.index = index;
 
@@ -583,10 +645,12 @@ void parse_export_section(std::span<const uint8_t> data, Module& module)
 	if (module.exports.size() == exportCount) 
 	{
 		std::cout << "Export section parsed successfully - " << exportCount << " exports decoded" << std::endl;
+		return 0;
 	}
 	else 
 	{
 		std::cout << "Error while parsing export secion, only " << module.exports.size() << "exports pushed into module object" << std::endl;
+		return -1;
 	}
 
 }
@@ -617,18 +681,19 @@ void parse_function(std::span<const uint8_t>data,size_t eleCount,size_t &offset,
 {
 	for(size_t i=0;i<eleCount;i++)
 	{
-		size_t func_ID = leb128_decode(data,secSize,offset);
+		size_t func_ID = leb128_decode(data, offset, 32, false);
 		std::cout << "func index: " << func_ID << std::endl;
 	}
 }
+
 void parse_expression(std::span<const uint8_t>data,size_t eleCount,size_t &offset,size_t secSize,Module& module)
 {
-	uint8_t opcode = leb128_decode(data,secSize,offset);
-	switch (opcode)
+	uint8_t opcode = leb128_decode(data, offset, 32, false);
+	switch (opcode) 
 	{
 	case 0xD2: //ref.func
 	{
-		size_t funcIND=leb128_decode(data,secSize,offset);
+		size_t funcIND=leb128_decode(data, offset, 32, false);
 		std::cout << "ref.func: " << funcIND<< std::endl;
 		offset++;//skipping END Byte(END BYTE = 0x0B)
 		break;
@@ -643,7 +708,7 @@ void parse_expression(std::span<const uint8_t>data,size_t eleCount,size_t &offse
 	}
 	case 0x23:
 	{
-		size_t globalIND=leb128_decode(data,secSize,offset);
+		size_t globalIND=leb128_decode(data, offset, 32, false);
 		std::cout<< "global.get: " << globalIND << std::endl;
 		offset++;
 		break;
@@ -655,7 +720,7 @@ void parse_expression(std::span<const uint8_t>data,size_t eleCount,size_t &offse
 std::string read_string(std::span<const uint8_t>data,size_t &offset)
 {
 	size_t secSize=data.size();
-	size_t len =leb128_decode(data,secSize,offset);
+	size_t len = leb128_decode(data, offset, 32, false);
 	std::cout<<"Length: "<<len<<std::endl;
 	std::string bytes ="";
 	for(size_t j=0;j<len;j++)
@@ -1016,23 +1081,59 @@ void print_string_of_opcode(Instr opcode) {
 	}
 }
 
-size_t leb128_decode(std::span<const uint8_t> data, size_t secSize, size_t& offset) 
-{
-	size_t integer = 0;
+size_t leb128_decode(std::span<const uint8_t> data, size_t& offset, int num_bits, bool is_signed) //should do better error handling for this
+{	
+	size_t dataSize = data.size();
+
+	if (num_bits > 64)
+	{
+		std::cout << "ERROR IN LEB128 DECODER - number of bits given as integer size exceeds " << MAX_WASM_INTEGER_SIZE*8 << " bits." << std::endl;
+		std::cout << "\tNumber of bits given: " << num_bits << std::endl;
+		std::cout << "\tAs of WASM 1.0, the biggest supported integer type is " << MAX_WASM_INTEGER_SIZE << " bytes." << std::endl;
+		std::cout << "Exiting program." << std::endl;
+		exit(-1);
+	}
+
+    size_t integer = 0;
+
+	size_t num_bytes; //max num. bytes required to encode <num_bits> bit number = ceil(num_bits / 7)
+	if (num_bits % 7) num_bytes = num_bits/7 + 1;
+	else num_bytes = num_bits/7;
+    
+	size_t offset_limit;
+	if (offset + num_bytes < dataSize) {
+		offset_limit = offset + num_bytes;
+	}
+	else {
+		offset_limit = dataSize;
+	}
+
     int shift = 0;
-    while(offset < secSize)		
+    while(offset < offset_limit)													
     {
-        if(data[offset]&0x80) 
+		integer |= static_cast<size_t>(data[offset] & 0x7f) << shift;
+		shift += 7;
+        if((data[offset] & 0x80) == 0) 
         {
-            integer|=(data[offset]&0x7f)<<shift;
-            shift+=7;
-        }
-        else{
-            integer|=(data[offset]&0x7f)<<shift; 
+			if (is_signed && (data[offset] & 0x40))
+			{
+				size_t sign_extend_mask = 0;
+				sign_extend_mask = ~sign_extend_mask;
+				if (shift >= SIZE_OF_SIZE_T*8)
+				{
+					shift = SIZE_OF_SIZE_T*8 - 1;
+				}
+				integer |= sign_extend_mask << shift;
+			}
 			++offset; //move offset past the end of the integer before returning
             return integer;
         }
 		++offset;
     }
-    return integer;	
+	
+	//If control reaches here then offset has exceeded offset_limit, so it the LEB128 being read is malformed.
+	std::cout << "ERROR IN LEB128 DECODER - MALFORMED LEB128. MAX ENCODING LENGTH EXCEEDED." << std::endl;
+	std::cout << "\tFor " << num_bits << " bits, max encoding length is " << num_bytes << " bytes" << std::endl;
+	std::cout << "Exiting program." << std::endl; //should do better error handling here
+	exit(-1);
 }
