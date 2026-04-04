@@ -6,10 +6,10 @@
 
 typedef std::variant<int32_t,int64_t,float,double> Value;
 enum class ValueType {
-	i32,
-	i64,
-	f32,
-	f64,
+	i32		= 0x7F,
+	i64 	= 0x7E,
+	f32 	= 0x7D,
+	f64 	= 0x7C,
 };
 
 ValueType to_value_type(Value);

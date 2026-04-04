@@ -158,8 +158,8 @@ std::string to_string(Instruction i) {
 				case UnaryFloat::Kind::Neg:
 					out += "neg";
 					break;
-				case UnaryFloat::Kind::Ciel:
-					out += "ciel";
+				case UnaryFloat::Kind::Ceil:
+					out += "ceil";
 					break;
 				case UnaryFloat::Kind::Floor:
 					out += "floor";

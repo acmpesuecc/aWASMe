@@ -1,5 +1,5 @@
 /* To execute: 
-	g++ -std=c++20 -I./include src/parser/main.cpp src/parser/parser.cpp -o parser.exe
+	g++ -std=c++20 -I./include src/parser/main.cpp src/parser/parser.cpp src/parser/codeparsing.cpp -o parser.exe
 	./parser.exe "<path to .wasm file>"
 
 	(or)
@@ -26,27 +26,29 @@ int main (int argc, char* argv[]) {
 	}
 	
 	std::vector<uint8_t> data = Loadfile(argv[1]);
-	int filesize = data.size();
+	size_t filesize = data.size();
 	if (filesize == 0) 
 	{
 		std::cout << "Invalid file given for parsing (not WASM 1.0)" << std::endl;
 		return 0;
 	}
 	
-	size_t offset = 8; //You have already parsed bytes 0-7 by verifying the magic number and version
+	size_t offset = 8; //Bytes 0-7 have already been parsed by verifying the magic number and version
 	std::span<const uint8_t> dataspan = data;
 	std::span<const uint8_t> sectionData;
 	size_t secSize;
 	
-	Module module(filesize);
-	std::cout << "Empty module created, file size is " << module.filesize << " bytes." << std::endl;
+	Module module{};
 	
-    while(offset<filesize)
+	std::cout << "****Note: all numeric values being printed on the screen are being printed in hexadecimal format\n\n" << std::endl;
+	std::cout << std::hex;
+
+    while (offset < filesize)
     {
         uint8_t Id = data[offset]; //read section ID
 		std::cout << "Section ID: " << (int)Id << std::endl;
 		++offset;
-		secSize = leb128_decode(data, filesize, offset); //read section size - leb128 changes offset globally to be past the integer by itself 
+		secSize = leb128_decode(dataspan, filesize, offset); //read section size - leb128 changes offset globally to be past the integer by itself 
 		std::cout << "Section size (read from wasm file): " << secSize << std::endl;
 		sectionData = dataspan.subspan(offset, secSize);		//bc of above, section size is not included in section data when passing to parsing functions
 		
@@ -54,42 +56,54 @@ int main (int argc, char* argv[]) {
         {
          // Call the corrosponding functions here 
             case 1:
-				parse_type_section(sectionData,module);
+				std::cout << "Parsing type section" << std::endl;
+				parse_type_section(sectionData, module);
                 break;
 			case 2:
-				parse_import_section(sectionData,module);
+				std::cout << "Parsing import section" << std::endl;
+				parse_import_section(sectionData, module);
 				break;
             case 3:
-				parse_func_section(sectionData,module);
+				std::cout << "Parsing function section" << std::endl;
+				parse_func_section(sectionData, module);
                 break;
 			case 4:
-				parse_table_section(sectionData,module);
+				std::cout << "Parsing table section" << std::endl;
+				parse_table_section(sectionData, module);
 				break;
 			case 5:
-				parse_mem_section(sectionData,module);
+				std::cout << "Parsing memory section" << std::endl;
+				parse_mem_section(sectionData, module);
 				break;
 			case 6:
-				parse_global_section(sectionData,module);
+				std::cout << "Parsing global section" << std::endl;
+				parse_global_section(sectionData, module);
 				break;
 			case 7:
-				parse_export_section(sectionData,module);
+				std::cout << "Parsing export section" << std::endl;
+				parse_export_section(sectionData, module);
 				break;
             case 8:
-				parse_start_section(sectionData,module);
+				std::cout << "Parsing start section" << std::endl;
+				parse_start_section(sectionData, module);
                 break;
 			case 9:
-				parse_element_section(sectionData,module);
+				std::cout << "Parsing element section" << std::endl;
+				parse_element_section(sectionData, module);
 				break;
             case 10:
+				std::cout << "Parsing code section" << std::endl;
+				std::cout << "OFFSET BEFORE CODE SECTION: " << std::hex << (int)offset << std::endl; 
 				parse_code_section(sectionData, module);	
                 break;
 			case 11:
-				parse_data_section(sectionData,module);
+				std::cout << "Parsing data section" << std::endl;
+				parse_data_section(sectionData, module);
 				break;
             default:
                 break;
         } 
-		std::cout<<"--------------------------------------------------------------------------\n";
+		std::cout<<"--------------------------------------------------------------------------" << std::endl;
 		
 		offset+=secSize;
     }
