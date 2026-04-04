@@ -309,6 +309,59 @@ std::string to_string(Instruction i) {
 			out += i.is_signed ? "s" : "u";
 			return out;
 		},
+		[](MemoryGrow&) {
+			return std::string("memory.grow");
+		},
+		[](MemorySize&) {
+			return std::string("memory.size");
+		},
+		[](MemoryLoad& ml) {
+			std::string out;
+			switch (ml.kind) {
+				case MemoryLoad::Kind::I32Load: out = "i32.load"; break;
+				case MemoryLoad::Kind::I64Load: out = "i64.load"; break;
+				case MemoryLoad::Kind::F32Load: out = "f32.load"; break;
+				case MemoryLoad::Kind::F64Load: out = "f64.load"; break;
+				case MemoryLoad::Kind::I32Load8S: out = "i32.load8_s"; break;
+				case MemoryLoad::Kind::I32Load8U: out = "i32.load8_u"; break;
+				case MemoryLoad::Kind::I32Load16S: out = "i32.load16_s"; break;
+				case MemoryLoad::Kind::I32Load16U: out = "i32.load16_u"; break;
+				case MemoryLoad::Kind::I64Load8S: out = "i64.load8_s"; break;
+				case MemoryLoad::Kind::I64Load8U: out = "i64.load8_u"; break;
+				case MemoryLoad::Kind::I64Load16S: out = "i64.load16_s"; break;
+				case MemoryLoad::Kind::I64Load16U: out = "i64.load16_u"; break;
+				case MemoryLoad::Kind::I64Load32S: out = "i64.load32_s"; break;
+				case MemoryLoad::Kind::I64Load32U: out = "i64.load32_u"; break;
+			}
+			if (ml.offset != 0) {
+				out += " offset=" + std::to_string(ml.offset);
+			}
+			return out;
+		},
+		[](MemoryStore& ms) {
+			std::string out;
+			switch (ms.kind) {
+				case MemoryStore::Kind::I32Store: out = "i32.store"; break;
+				case MemoryStore::Kind::I64Store: out = "i64.store"; break;
+				case MemoryStore::Kind::F32Store: out = "f32.store"; break;
+				case MemoryStore::Kind::F64Store: out = "f64.store"; break;
+				case MemoryStore::Kind::I32Store8: out = "i32.store8"; break;
+				case MemoryStore::Kind::I32Store16: out = "i32.store16"; break;
+				case MemoryStore::Kind::I64Store8: out = "i64.store8"; break;
+				case MemoryStore::Kind::I64Store16: out = "i64.store16"; break;
+				case MemoryStore::Kind::I64Store32: out = "i64.store32"; break;
+			}
+			if (ms.offset != 0) {
+				out += " offset=" + std::to_string(ms.offset);
+			}
+			return out;
+		},
+		[](MemoryFill&) {
+			return std::string("memory.fill");
+		},
+		[](MemoryCopy&) {
+			return std::string("memory.copy");
+		},
 		[](ReinterpretBits& rb) {
 			std::string out = "";
 			switch(rb.from) {
