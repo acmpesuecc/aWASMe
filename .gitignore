@@ -1,6 +1,8 @@
 engine.exe
 parser.exe
+main.exe
 testfiles/
 .vscode/
 build/
 note.txt
+demo/web

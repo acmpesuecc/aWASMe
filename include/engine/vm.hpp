@@ -48,6 +48,10 @@ class VM {
 		/// Also updates the ip after running each instruction successfully. 
 		void run();
 
+		// Run a single function whose body has been loaded into the VM via `load`, using the provided function metadata and arguments.
+		// Returns the top-of-stack value if the function has a single return, or std::nullopt otherwise.
+		std::optional<Value> run_function(const FunctionInfo& fn_info, const std::vector<Value>& args);
+
 		// Registers a function into the VM and returns the index which will be used to refer to it.
 		size_t register_function(FunctionInfo f);
 

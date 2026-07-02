@@ -492,7 +492,7 @@ bool VM::run_instr(const Instruction& instr) {
 
 			[&](const BinaryFloat& instr) { 
 				ValueType type = instr.num_type == FloatType::f32 ? ValueType::f32 : ValueType::f64;	
-				this->expect_stack({type});
+				this->expect_stack({type, type});
 
 				Value v2 = this->pop().value();
 				Value v1 = this->pop().value();
@@ -737,7 +737,7 @@ bool VM::run_instr(const Instruction& instr) {
 							std::optional<Value> v = cf->get_local(local.index);
 							if(!v.has_value()) throw InvalidIndex(InvalidIndex::IndexFor::Local,local.index);
 
-							std::vector<ValueType> exp = {to_value_type(v.has_value())};
+							std::vector<ValueType> exp = {to_value_type(v.value())};
 							this->expect_stack(exp);
 
 							cf->set_local_raw(local.index,this->pop().value());
@@ -748,7 +748,7 @@ bool VM::run_instr(const Instruction& instr) {
 							std::optional<Value> v = cf->get_local(local.index);
 							if(!v.has_value()) throw InvalidIndex(InvalidIndex::IndexFor::Local,local.index);
 
-							std::vector<ValueType> exp = {to_value_type(v.has_value())};
+							std::vector<ValueType> exp = {to_value_type(v.value())};
 							this->expect_stack(exp);
 
 							cf->set_local_raw(local.index,this->stack.back());
@@ -1229,4 +1229,43 @@ size_t VM::register_global(Value intial_value, bool is_mutable) {
 Value VM::pop_type_or_error(ValueType type) {
 	this->expect_stack(std::vector{type});
 	return this->pop().value();
+}
+
+std::optional<Value> VM::run_function(const FunctionInfo& fn_info, const std::vector<Value>& args) {
+	if (args.size() != fn_info.args.size()) {
+		throw std::runtime_error("Argument count mismatch for function call");
+	}
+	for (size_t i = 0; i < args.size(); ++i) {
+		if (to_value_type(args[i]) != fn_info.args[i]) {
+			throw std::runtime_error("Argument type mismatch for function call");
+		}
+	}
+
+	this->stack.clear();
+	this->control_frames.clear();
+
+	std::vector<Value> locals;
+	locals.reserve(args.size() + fn_info.locals.size());
+	for (const auto& v : args) {
+		locals.push_back(v);
+	}
+	for (ValueType t : fn_info.locals) {
+		locals.push_back(zero_from_value_type(t));
+	}
+
+	ActivationRecord a(const_cast<FunctionInfo&>(fn_info), locals);
+	a.return_to = std::nullopt;
+	ControlFrame cf(a, this->stack.size());
+	this->control_frames.push_back(cf);
+
+	this->set_ip(fn_info.block_info.block_start);
+	this->run();
+
+	if (!fn_info.block_info.return_type.has_value()) {
+		return std::nullopt;
+	}
+	if (this->stack.empty()) {
+		return std::nullopt;
+	}
+	return this->pop();
 }

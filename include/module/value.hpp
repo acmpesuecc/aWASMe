@@ -1,7 +1,6 @@
 #pragma once
 #include<variant>
 #include<cstdint>
-#include<stdfloat>
 #include<string>
 
 typedef std::variant<int32_t,int64_t,float,double> Value;

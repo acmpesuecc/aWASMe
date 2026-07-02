@@ -12,8 +12,8 @@ std::vector<Instruction> parse_code(std::span<const uint8_t> data, size_t& offse
     size_t instrvectorEnd = 0;
     Instruction instr;
 
-    std::vector<std::pair<Instruction*, uint8_t>> scope_stack{};
-    std::pair<Instruction*, uint8_t> scope_stack_item;
+    std::vector<std::pair<size_t, uint8_t>> scope_stack{};
+    std::pair<size_t, uint8_t> scope_stack_item;
         //the uint8_t in the pair is to mark whether an else block is being parsed currently or not. Algo is as follows
         /*
         On reading a Block, Loop or If: 
@@ -60,7 +60,7 @@ std::vector<Instruction> parse_code(std::span<const uint8_t> data, size_t& offse
             case InstrCategory::Scope:
             {
                 instructions.push_back(parse_Scope(data, codeSize, offset, opcode, instrvectorEnd));
-                scope_stack_item.first = &instructions[instrvectorEnd];
+                scope_stack_item.first = instrvectorEnd;
                 scope_stack_item.second = 0;
                 scope_stack.push_back(scope_stack_item);
                 ++instrvectorEnd;
@@ -78,20 +78,22 @@ std::vector<Instruction> parse_code(std::span<const uint8_t> data, size_t& offse
                 {
                     scope_stack_item = scope_stack.back();
                     scope_stack.pop_back();
-                    if (std::get<Scope>(*(scope_stack_item.first)).kind != Scope::Kind::If) 
+                    if (std::get<Scope>(instructions[scope_stack_item.first]).kind != Scope::Kind::If) 
                     {
                         std::cout << "Error, dangling else detected. Returning empty instruction vector." << std::endl;
                         return std::vector<Instruction>();
                     }
-                    else 
-                    {
-                        std::get<Scope>(*(scope_stack_item.first)).info.block_end = instrvectorEnd;
-                        std::get<Scope>(*(scope_stack_item.first)).else_info = BlockInfo{.block_start = instrvectorEnd + 1, //else block starts in the next instruction
-                            .block_end = 0, //fill in block_end with 0 for now, it will be filled in with proper value later
-                            .return_type = std::nullopt}; //else block never has a return type of its own, it shares with if block
-                        scope_stack_item.second = 1;
-                        scope_stack.push_back(scope_stack_item);
-                    }
+                        {
+                            Scope& if_scope = std::get<Scope>(instructions[scope_stack_item.first]);
+                            std::optional<ValueType> shared_return_type = if_scope.info.return_type;
+                            if_scope.info.block_end = instrvectorEnd;
+                            if_scope.else_info = BlockInfo{
+                                .block_start = instrvectorEnd, //set to End{} separator so ip++ lands on first else instruction
+                                .block_end = 0, //fill in block_end with 0 for now, it will be filled in with proper value later
+                                .return_type = shared_return_type}; //else block shares return type with if block
+                            scope_stack_item.second = 1;
+                            scope_stack.push_back(scope_stack_item);
+                        }
                 }
                 ++instrvectorEnd;
                 break;
@@ -111,11 +113,13 @@ std::vector<Instruction> parse_code(std::span<const uint8_t> data, size_t& offse
                     scope_stack.pop_back();
                     if (scope_stack_item.second == 1) 
                     {
-                        std::get<Scope>(*(scope_stack_item.first)).else_info.value().block_end = instrvectorEnd;
+                        Scope& sc = std::get<Scope>(instructions[scope_stack_item.first]);
+                        sc.else_info.value().block_end = instrvectorEnd;
+                        sc.if_else_end = instrvectorEnd;
                     }
                     else 
                     {
-                        std::get<Scope>(*(scope_stack_item.first)).info.block_end = instrvectorEnd;
+                        std::get<Scope>(instructions[scope_stack_item.first]).info.block_end = instrvectorEnd;
                     }
                     ++instrvectorEnd;
                 }
@@ -1238,6 +1242,7 @@ Instruction parse_Scope(std::span<const uint8_t> data, size_t codeSize, size_t& 
     Scope instr{};
     instr.info.block_start = instrvectorEnd;
     instr.else_info = std::nullopt;
+    instr.if_else_end = std::nullopt;
 
     switch (opcode)
     {
@@ -1260,17 +1265,18 @@ Instruction parse_Scope(std::span<const uint8_t> data, size_t codeSize, size_t& 
         {  
             break;
         }
+    }
 
-        //Reading return type of block, loop, or if block
-        if (data[offset] != 0x40) //0x40 means that the block returns nothing 
-        {
-            ValueType type = static_cast<ValueType>(data[offset]);
-            instr.info.return_type = type;
-        }
-        else
-        {
-            instr.info.return_type = std::nullopt;
-        }
+    // Reading return type of block, loop, or if block.
+    // 0x40 means that the block returns nothing.
+    if (offset < codeSize && data[offset] != 0x40)
+    {
+        ValueType type = static_cast<ValueType>(data[offset]);
+        instr.info.return_type = type;
+    }
+    else
+    {
+        instr.info.return_type = std::nullopt;
     }
 
     ++offset; //move past the return type
